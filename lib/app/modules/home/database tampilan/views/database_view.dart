@@ -34,7 +34,7 @@ class _DatabaseViewState extends State<DatabaseView> {
         height: screenHeight * 0.25,
         child: Center(
           child: Text(
-            "Mie Ayam \nBhayangkaraa",
+            "Mie Ayam \nBhayangkara",
             textAlign: TextAlign.center,
             style: GoogleFonts.jockeyOne(
               fontSize: screenHeight * 0.05,

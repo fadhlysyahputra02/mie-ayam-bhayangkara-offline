@@ -79,7 +79,7 @@ class _RiwayatViewState extends State<RiwayatView> {
           _selectedDate.year,
           _selectedDate.month,
           _selectedDate.day,
-          18,
+          22,
         );
         final cutoffNextDay = cutoffToday.add(const Duration(days: 1));
 

@@ -70,8 +70,8 @@ class _AntreanPageState extends State<AntreanPage> {
 
                 final now = DateTime.now();
 
-                // Batas awal hari ini dimulai jam 20:00
-                final startOfToday = DateTime(now.year, now.month, now.day, 18);
+                // Batas awal hari ini dimulai jam 22:00
+                final startOfToday = DateTime(now.year, now.month, now.day, 22);
 
                 // Filter data >= startOfToday
                 final pesananList = List<Map<String, dynamic>>.from(
