@@ -178,7 +178,7 @@ class _MenuViewState extends State<MenuView> {
   /// Tombol Buat Pesanan
   Widget _buildBuatPesananButton(double screenHeight) {
     return Positioned(
-      bottom: screenHeight * 0.02,
+      bottom: screenHeight * 0.015,
       left: 16,
       right: 16,
       child: ElevatedButton(

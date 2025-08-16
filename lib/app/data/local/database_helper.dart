@@ -92,6 +92,45 @@ class DatabaseHelper {
     return await db.delete('pesanan', where: 'no_id = ?', whereArgs: [noId]);
   }
 
+  // === FUNGSI DELETE SEMUA DATA ===
+  Future<int> deleteAllPesanan() async {
+    final db = await database;
+    return await db.delete('pesanan'); // hapus semua row
+  }
+
+  Future<void> deletePesananHariIni() async {
+    final db = await database;
+
+    final now = DateTime.now();
+
+    // Tentukan cutoff (jam 22:00 hari ini)
+    final cutoff = DateTime(now.year, now.month, now.day, 22);
+
+    late int start;
+    late int end;
+
+    if (now.isBefore(cutoff)) {
+      // Kalau masih sebelum jam 22 hari ini,
+      // berarti yang aktif adalah range kemarin jam 22 -> hari ini jam 21:59
+      final yesterdayCutoff = cutoff.subtract(const Duration(days: 1));
+      start = yesterdayCutoff.millisecondsSinceEpoch;
+      end = cutoff.millisecondsSinceEpoch;
+    } else {
+      // Kalau sudah lewat jam 22 hari ini,
+      // berarti yang aktif adalah range hari ini jam 22 -> besok jam 21:59
+      final tomorrowCutoff = cutoff.add(const Duration(days: 1));
+      start = cutoff.millisecondsSinceEpoch;
+      end = tomorrowCutoff.millisecondsSinceEpoch;
+    }
+
+    // Hapus semua data dalam range waktu tersebut
+    await db.delete(
+      'pesanan',
+      where: 'timestamp >= ? AND timestamp < ?',
+      whereArgs: [start, end],
+    );
+  }
+
   // Tambahkan method update status pesanan
   Future<int> SelesaiMasak(int noId, bool isDone) async {
     final db = await database;
@@ -112,6 +151,17 @@ class DatabaseHelper {
       whereArgs: [noId],
     );
   }
+
+  Future<int> SelesaiBayarSemua() async {
+  final db = await database;
+  return await db.update(
+    'pesanan',
+    {'status': 'selesai_bayar'},
+    where: 'status != ?',
+    whereArgs: ['selesai_bayar'], // hanya yang belum selesai bayar
+  );
+}
+
 
   Future<int> updatePesanan(
     int id, {
@@ -134,6 +184,20 @@ class DatabaseHelper {
       data,
       where: 'rowid = ?',
       whereArgs: [id],
+    );
+  }
+
+  Future<int> updateTimestamp(int noId, int newTimestamp) async {
+    final db = await database;
+    final createdAtString = DateTime.fromMillisecondsSinceEpoch(
+      newTimestamp,
+    ).toIso8601String();
+
+    return await db.update(
+      'pesanan',
+      {'timestamp': newTimestamp, 'created_at': createdAtString},
+      where: 'no_id = ?',
+      whereArgs: [noId],
     );
   }
 }
