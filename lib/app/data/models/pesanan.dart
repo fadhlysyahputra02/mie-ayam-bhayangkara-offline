@@ -8,6 +8,7 @@ class Pesanan {
   final String createdAt;
   final int timestamp;
   final String status;
+  final String kategori;
 
   Pesanan({
     required this.noId,
@@ -19,6 +20,7 @@ class Pesanan {
     required this.createdAt,
     required this.timestamp,
     required this.status,
+    required this.kategori, // baru
   });
 
   // Method to convert Map to Pesanan object
@@ -33,6 +35,7 @@ class Pesanan {
       createdAt: map['created_at'],
       timestamp: map['timestamp'],
       status: map['status'],
+      kategori: map['kategori'] ?? 'makanan', // fallback
     );
   }
 
@@ -48,6 +51,7 @@ class Pesanan {
       'created_at': createdAt,
       'timestamp': timestamp,
       'status': status,
+      'kategori': kategori,
     };
   }
 

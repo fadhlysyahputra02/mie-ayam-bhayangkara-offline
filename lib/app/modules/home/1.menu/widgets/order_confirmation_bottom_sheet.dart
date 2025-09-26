@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../data/menu_data.dart';
-import 'note_shortcut.dart';
+import 'color_shortcut_button.dart';
+import 'note_choice.dart';
 
 class OrderConfirmationBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> pesanan;
@@ -280,67 +281,72 @@ class _OrderConfirmationBottomSheetState
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Grup kiri: jenis pakaian
+                  // Grup kiri: jenis pakaian (single select)
                   Expanded(
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        NoteShortcutButton(
-                          label: "Baju",
-                          controller: pembeliNoteController,
-                        ),
-                        NoteShortcutButton(
-                          label: "Jaket",
-                          controller: pembeliNoteController,
-                        ),
-                        NoteShortcutButton(
-                          label: "Topi",
-                          controller: pembeliNoteController,
-                        ),
-                        NoteShortcutButton(
-                          label: "Kerudung",
-                          controller: pembeliNoteController,
-                        ),
-                        NoteShortcutButton(
-                          label: "Mobil",
-                          controller: pembeliNoteController,
-                        ),
+                    child: NoteChoiceGroup(
+                      options: [
+                        "Baju",
+                        "Jaket",
+                        "Topi",
+                        "Kerudung",
+                        "Kemeja",
+                        "Mobil",
                       ],
+                      controller: pembeliNoteController,
                     ),
                   ),
 
-                  // Spacer kecil biar ada jarak
                   const SizedBox(width: 12),
 
-                  // Grup kanan: warna
+                  // Grup kanan: warna (pakai bulatan warna)
                   Expanded(
                     child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Hitam",
+                          color: Colors.black,
                           controller: pembeliNoteController,
                         ),
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Merah",
+                          color: Colors.red,
                           controller: pembeliNoteController,
                         ),
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Putih",
+                          color: Colors.white,
                           controller: pembeliNoteController,
                         ),
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Kuning",
+                          color: Colors.yellow,
                           controller: pembeliNoteController,
                         ),
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Biru",
+                          color: Colors.blue,
                           controller: pembeliNoteController,
                         ),
-                        NoteShortcutButton(
+                        ColorShortcutButton(
                           label: "Hijau",
+                          color: Colors.green,
+                          controller: pembeliNoteController,
+                        ),
+                        ColorShortcutButton(
+                          label: "Coklat",
+                          color: Colors.brown,
+                          controller: pembeliNoteController,
+                        ),
+                        ColorShortcutButton(
+                          label: "Cream",
+                          color: const Color.fromARGB(255, 235, 243, 172),
+                          controller: pembeliNoteController,
+                        ),
+                        ColorShortcutButton(
+                          label: "Pink",
+                          color: const Color.fromARGB(255, 255, 50, 119),
                           controller: pembeliNoteController,
                         ),
                       ],

@@ -8,7 +8,7 @@ import 'edit_order_bottom_sheet.dart';
 import '../../../widgets/header_widget.dart';
 import 'order_card.dart';
 import '../controllers/antrean_controller.dart';
-import '../widgets/animatedfeb.dart';
+import '../widgets/draggablefab.dart';
 
 class AntreanPage extends StatefulWidget {
   const AntreanPage({super.key});
@@ -37,11 +37,25 @@ class _AntreanPageState extends State<AntreanPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-
+    final GlobalKey _headerKey = GlobalKey();
+    double _headerHeight = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+  final context = _headerKey.currentContext;
+  if (context != null) {
+    final box = context.findRenderObject() as RenderBox;
+    final newHeight = box.size.height;
+    if (_headerHeight != newHeight) {
+      setState(() {
+        _headerHeight = newHeight;
+      });
+    }
+  }
+});
     return Scaffold(
       body: Column(
         children: [
-          HeaderWidget(screenHeight: screenHeight),
+          HeaderWidget(key: _headerKey, screenHeight: screenHeight),
+
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _pesananFuture,
@@ -67,7 +81,9 @@ class _AntreanPageState extends State<AntreanPage> {
                     final itemTime = DateTime.fromMillisecondsSinceEpoch(
                       item['timestamp'] ?? 0,
                     );
-                    final statusOk = item['status'] == "true" || item['status'] == "selesai_masak";
+                    final statusOk =
+                        item['status'] == "true" ||
+                        item['status'] == "selesai_masak";
 
                     if (now.isBefore(cutoffTime)) {
                       return statusOk;
@@ -103,7 +119,10 @@ class _AntreanPageState extends State<AntreanPage> {
                     RefreshIndicator(
                       onRefresh: _loadPesanan,
                       child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         children: groupedPesanan.entries.map((entry) {
                           final noId = entry.key;
                           final items = entry.value;
@@ -118,18 +137,13 @@ class _AntreanPageState extends State<AntreanPage> {
                         }).toList(),
                       ),
                     ),
-                    Positioned(
-                      bottom: 36,
-                      right: -40,
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: AnimatedFab(
-                          icon: Icons.delete,
-                          onPressed: () => _deleteAllAntrean(context),
-                        ),
-                      ),
-                    ),
+                    DraggableFab(
+  icon: Icons.delete,
+  minTop: _headerHeight + 10, // supaya FAB mulai di bawah header
+  maxTop: MediaQuery.of(context).size.height - 120,
+  onPressed: () => _deleteAllAntrean(context),
+),
+
                   ],
                 );
               },
@@ -145,7 +159,9 @@ class _AntreanPageState extends State<AntreanPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => EditOrderBottomSheet(
         item: item,
         onSave: (updatedItem) async {
@@ -166,12 +182,22 @@ class _AntreanPageState extends State<AntreanPage> {
   Future<void> _handleSelesaiMasak(int noId) async {
     await DatabaseHelper.instance.SelesaiMasak(noId, true);
     await _loadPesanan();
-    ConfirmationDialogs.showAutoDismiss(context, Icons.check_circle, Colors.green, "Pesanan Telah Diantar");
+    ConfirmationDialogs.showAutoDismiss(
+      context,
+      Icons.check_circle,
+      Colors.green,
+      "Pesanan Telah Diantar",
+    );
   }
 
   Future<void> _handleSelesaiBayar(int noId) async {
     await DatabaseHelper.instance.SelesaiBayar(noId, true);
-    ConfirmationDialogs.showAutoDismiss(context, Icons.check_circle, Colors.red, "Pesanan Telah Dibayar");
+    ConfirmationDialogs.showAutoDismiss(
+      context,
+      Icons.check_circle,
+      Colors.red,
+      "Pesanan Telah Dibayar",
+    );
   }
 
   Future<void> _deleteAllAntrean(BuildContext context) async {

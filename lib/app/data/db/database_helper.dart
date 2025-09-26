@@ -35,6 +35,7 @@ class DatabaseHelper {
       total INTEGER,
       note TEXT,
       ciri_pembeli TEXT,
+      kategori TEXT,
       created_at TEXT,
       no_id INTEGER,
       timestamp INTEGER,
@@ -57,6 +58,7 @@ class DatabaseHelper {
     int qty,
     int total,
     String note,
+    String kategori,
     String ciriPembeli, {
     String status = "true",
   }) async {
@@ -67,6 +69,7 @@ class DatabaseHelper {
       total: total,
       note: note,
       ciriPembeli: ciriPembeli,
+      kategori: kategori, // kirim ke helper
       status: status,
     );
     return await db.insert('pesanan', data);
@@ -89,12 +92,20 @@ class DatabaseHelper {
 
   Future<int> SelesaiMasak(int noId, bool isDone) async {
     final db = await database;
-    return await PesananHelper.updatePesananStatus(db, noId, isDone ? 'selesai_masak' : '');
+    return await PesananHelper.updatePesananStatus(
+      db,
+      noId,
+      isDone ? 'selesai_masak' : '',
+    );
   }
 
   Future<int> SelesaiBayar(int noId, bool isDone) async {
     final db = await database;
-    return await PesananHelper.updatePesananStatus(db, noId, isDone ? 'selesai_bayar' : 'false');
+    return await PesananHelper.updatePesananStatus(
+      db,
+      noId,
+      isDone ? 'selesai_bayar' : 'false',
+    );
   }
 
   Future<int> SelesaiBayarSemua() async {

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kasir_mie_ayamku/app/modules/home/4.database%20tampilan/views/database_view.dart';
+import 'package:kasir_mie_ayamku/app/modules/home/pesanan/pesanan_list_page.dart';
 import '../../2.antrean/views/antrean_view.dart';
 import '../../1.menu/views/menu_view.dart';
 import '../../3.riwayat/views/riwayat_view.dart';
@@ -14,7 +15,8 @@ class NavbarView extends StatelessWidget {
     MenuView(),
     AntreanPage(),
     RiwayatView(),
-    DatabaseView()
+    DatabaseView(),
+    //PesananListPage()
   ];
 
   @override
@@ -64,6 +66,11 @@ class NavbarView extends StatelessWidget {
                 activeIcon: Icon(Icons.storage, size: 30),
                 label: "Database",
               ),
+              // BottomNavigationBarItem(
+              //   icon: Icon(Icons.storage_outlined, size: 24),
+              //   activeIcon: Icon(Icons.storage, size: 30),
+              //   label: "Tabel",
+              // ),
             ],
           ),
         ),

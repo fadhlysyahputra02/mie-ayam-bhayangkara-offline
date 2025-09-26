@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 
-class NoteShortcutButton extends StatelessWidget {
-  final String label;
+class ColorShortcutButton extends StatelessWidget {
+  final String label; // tetap perlu untuk input ke textfield
+  final Color color;
   final TextEditingController controller;
 
-  const NoteShortcutButton({
+  const ColorShortcutButton({
     super.key,
     required this.label,
+    required this.color,
     required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        minimumSize: Size.zero, // biar tombol kecil
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      onPressed: () {
+    return InkWell(
+      onTap: () {
         final current = controller.text.trim();
         if (current.isEmpty) {
           controller.text = label;
@@ -26,14 +23,19 @@ class NoteShortcutButton extends StatelessWidget {
           controller.text = "$current $label";
         }
 
-        // pindahkan cursor ke akhir text
         controller.selection = TextSelection.fromPosition(
           TextPosition(offset: controller.text.length),
         );
       },
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 14),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle, // bulat
+          border: Border.all(color: Colors.grey.shade400, width: 1),
+        ),
       ),
     );
   }

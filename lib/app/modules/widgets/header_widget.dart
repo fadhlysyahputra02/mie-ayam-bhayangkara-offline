@@ -4,7 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 class HeaderWidget extends StatelessWidget {
   final double screenHeight;
 
-  const HeaderWidget({super.key, required this.screenHeight});
+  const HeaderWidget({
+    super.key,   // penting biar bisa pakai GlobalKey dari parent
+    required this.screenHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +22,7 @@ class HeaderWidget extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: screenHeight * 0.25,
+        height: screenHeight * 0.25,  // ini nanti akan kita hitung real tingginya di parent
         child: Column(
           children: [
             Padding(

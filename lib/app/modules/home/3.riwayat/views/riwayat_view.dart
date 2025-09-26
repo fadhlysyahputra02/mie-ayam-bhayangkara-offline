@@ -94,7 +94,6 @@ class _RiwayatViewState extends State<RiwayatView> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final anchorDate = _getAnchorDate(DateTime.now());
-
     final List<DateTime> dateButtons = List.generate(
       6,
       (index) => anchorDate.subtract(Duration(days: index)),
@@ -159,28 +158,85 @@ class _RiwayatViewState extends State<RiwayatView> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final groupedData = _groupPesanan(snapshot.data!);
-                num totalSemua = 0;
-                groupedData.values.forEach((list) {
-                  totalSemua += list.fold<num>(
-                    0,
-                    (sum, item) => sum + (item['total'] ?? 0),
-                  );
-                });
+
+                // Tentukan anchor date
+                final anchorDate = _getAnchorDate(DateTime.now());
+                final startOfDay = anchorDate; // jam 18:00 hari anchor
+                final endOfDay = anchorDate.add(
+                  const Duration(days: 1),
+                ); // sampai 18:00 besok
+
+                // Filter pesanan berdasarkan rentang anchor day
+                final pesananHariIni = snapshot.data!.where((item) {
+                  final createdAt = DateTime.tryParse(item['created_at'] ?? '');
+                  if (createdAt == null) return false;
+                  return createdAt.isAfter(startOfDay) &&
+                      createdAt.isBefore(endOfDay);
+                }).toList();
+
+                // Hitung total harga hari ini
+                // Total harga hari ini (makanan + minuman)
+                num totalSemua = pesananHariIni.fold<num>(
+                  0,
+                  (sum, item) => sum + (item['total'] ?? 0),
+                );
+
+                // Total qty makanan saja
+                int totalQtyMakanan = pesananHariIni
+                    .where((item) => item['kategori'] == 'makanan')
+                    .fold<int>(0, (sum, item) => sum + (item['qty'] as int));
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 4,
                   ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Total hari ini: Rp ${NumberFormat('#,###').format(totalSemua)}",
-                      style: GoogleFonts.jockeyOne(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Total harga
+                      Text(
+                        "Total hari ini: Rp ${NumberFormat('#,###').format(totalSemua)}",
+                        style: GoogleFonts.jockeyOne(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+
+                      // Total qty makanan pakai badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.orange.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.fastfood,
+                              size: 18,
+                              color: Color.fromARGB(255, 135, 135, 135),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "$totalQtyMakanan porsi mie",
+                              style: GoogleFonts.jockeyOne(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: const Color.fromARGB(255, 135, 135, 135),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -197,7 +253,12 @@ class _RiwayatViewState extends State<RiwayatView> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text("Tidak ada data", style: GoogleFonts.jockeyOne(fontSize: 18),));
+                  return Center(
+                    child: Text(
+                      "Tidak ada data",
+                      style: GoogleFonts.jockeyOne(fontSize: 18),
+                    ),
+                  );
                 }
 
                 final groupedData = _groupPesanan(snapshot.data!);
@@ -353,7 +414,7 @@ class _PesananCardState extends State<PesananCard>
                           : '-';
                       return ListTile(
                         title: Text(
-                          item['nama'] ?? '',
+                          "${item['nama'] ?? ''} x${item['qty'] ?? 0}",
                           style: GoogleFonts.jockeyOne(fontSize: 16),
                         ),
                         subtitle: Text(

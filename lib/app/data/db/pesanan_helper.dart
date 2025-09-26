@@ -7,6 +7,7 @@ class PesananHelper {
     required int total,
     required String note,
     required String ciriPembeli,
+    required String kategori, // tambahkan ini
     String status = "true",
   }) {
     final now = DateTime.now();
@@ -22,6 +23,7 @@ class PesananHelper {
       'total': total,
       'note': note,
       'ciri_pembeli': ciriPembeli,
+      'kategori': kategori, // simpan di DB
       'created_at': now.toIso8601String(),
       'timestamp': timestamp,
       'status': status,
@@ -32,7 +34,11 @@ class PesananHelper {
     return await db.rawQuery('SELECT rowid AS id, * FROM pesanan');
   }
 
-  static Future<int> updatePesananStatus(Database db, int noId, String status) async {
+  static Future<int> updatePesananStatus(
+    Database db,
+    int noId,
+    String status,
+  ) async {
     return await db.update(
       'pesanan',
       {'status': status},
@@ -41,8 +47,14 @@ class PesananHelper {
     );
   }
 
-  static Future<int> updatePesananTimestamp(Database db, int noId, int newTimestamp) async {
-    final createdAtString = DateTime.fromMillisecondsSinceEpoch(newTimestamp).toIso8601String();
+  static Future<int> updatePesananTimestamp(
+    Database db,
+    int noId,
+    int newTimestamp,
+  ) async {
+    final createdAtString = DateTime.fromMillisecondsSinceEpoch(
+      newTimestamp,
+    ).toIso8601String();
     return await db.update(
       'pesanan',
       {'timestamp': newTimestamp, 'created_at': createdAtString},

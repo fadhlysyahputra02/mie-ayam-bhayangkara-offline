@@ -35,7 +35,6 @@ class _MenuViewState extends State<MenuView> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
-          
           // Card Minuman (di bawah)
           MenuCard(
             title: "Menu Minuman",
@@ -47,7 +46,8 @@ class _MenuViewState extends State<MenuView> {
             titleTopPadding: screenHeight * 0.5,
             screenHeight: screenHeight * 0.83,
             bgColor: const Color(0xFFFFEBD5),
-            onQuantityChanged: (index, newQty) => setState(() => qtyMinuman[index] = newQty),
+            onQuantityChanged: (index, newQty) =>
+                setState(() => qtyMinuman[index] = newQty),
           ),
           // Card Makanan (di atas)
           MenuCard(
@@ -60,7 +60,8 @@ class _MenuViewState extends State<MenuView> {
             titleTopPadding: screenHeight * 0.258,
             screenHeight: screenHeight * 0.49,
             bgColor: Colors.white,
-            onQuantityChanged: (index, newQty) => setState(() => qtyMakanan[index] = newQty),
+            onQuantityChanged: (index, newQty) =>
+                setState(() => qtyMakanan[index] = newQty),
           ),
 
           // Header
@@ -119,38 +120,47 @@ class _MenuViewState extends State<MenuView> {
 
     // Tampilkan bottom sheet konfirmasi
     // Tampilkan bottom sheet konfirmasi
-await showModalBottomSheet(
-  context: context,
-  isScrollControlled: true,
-  backgroundColor: Colors.transparent,
-  builder: (context) => OrderConfirmationBottomSheet(
-    pesanan: pesanan,
-    onConfirm: (finalPesanan, pembeliNote) async {
-      // Insert ke DB
-      for (var item in finalPesanan) {
-        await DatabaseHelper.instance.insertPesanan(
-          item['nama'] as String,
-          item['qty'] as int,
-          item['total'] as int,
-          item['note'] as String,
-          pembeliNote,
-          status: 'true',
-        );
-      }
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OrderConfirmationBottomSheet(
+        pesanan: pesanan,
+        onConfirm: (finalPesanan, pembeliNote) async {
+          // Insert ke DB
+          for (int i = 0; i < finalPesanan.length; i++) {
+            final item = finalPesanan[i];
 
-      // Reset qty UI
-      setState(() {
-        qtyMakanan = List.filled(qtyMakanan.length, 0);
-        qtyMinuman = List.filled(qtyMinuman.length, 0);
-      });
-      // ✅ Tampilkan dialog sukses setelah bottom sheet tertutup
-      if (mounted) {
-        _showSuccessDialog();
-      }
-    },
-  ),
-);
+            // Tentukan kategori dari list awal
+            String kategori = 'makanan'; // default
+            if (menuMinuman.any((m) => m['nama'] == item['nama'])) {
+              kategori = 'minuman';
+            } else if (menuMakanan.any((m) => m['nama'] == item['nama'])) {
+              kategori = 'makanan';
+            }
 
+            await DatabaseHelper.instance.insertPesanan(
+              item['nama'] as String,
+              item['qty'] as int,
+              item['total'] as int,
+              item['note'] as String,
+              kategori, // kategori di posisi ke-5
+              pembeliNote, // ciriPembeli di posisi ke-6
+              status: 'true',
+            );
+          }
+
+          // Reset qty UI
+          setState(() {
+            qtyMakanan = List.filled(qtyMakanan.length, 0);
+            qtyMinuman = List.filled(qtyMinuman.length, 0);
+          });
+
+          // Tampilkan dialog sukses
+          if (mounted) _showSuccessDialog();
+        },
+      ),
+    );
   }
 
   void _showSuccessDialog() {
@@ -158,9 +168,14 @@ await showModalBottomSheet(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        Future.delayed(const Duration(milliseconds: 700), () => Navigator.of(context).pop());
+        Future.delayed(
+          const Duration(milliseconds: 700),
+          () => Navigator.of(context).pop(),
+        );
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: const Padding(
             padding: EdgeInsets.all(16),
             child: Row(
