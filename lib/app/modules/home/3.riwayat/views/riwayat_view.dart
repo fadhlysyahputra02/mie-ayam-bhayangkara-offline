@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../data/local/database_helper.dart';
+
+import '../../../../data/db/database_helper.dart';
+import '../../../../widgets/header_widget.dart';
 
 class RiwayatView extends StatefulWidget {
   const RiwayatView({super.key});
@@ -21,6 +23,10 @@ class _RiwayatViewState extends State<RiwayatView> {
   void initState() {
     super.initState();
     _loadPesanan();
+
+    // Set selectedDate ke anchorDate supaya langsung "Sekarang"
+    _selectedDate = _getAnchorDate(DateTime.now());
+    _selectedFilterType = FilterType.sekarang;
   }
 
   void _loadPesanan() {
@@ -36,34 +42,6 @@ class _RiwayatViewState extends State<RiwayatView> {
     }
   }
 
-  Widget _buildHeader(double screenHeight) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 6,
-      color: const Color(0xFFFFEBCD),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-      ),
-      child: SizedBox(
-        height: screenHeight * 0.25,
-        child: Center(
-          child: Text(
-            "Mie Ayam \nBhayangkara",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.jockeyOne(
-              fontSize: screenHeight * 0.05,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Map<int, List<Map<String, dynamic>>> _groupPesanan(
     List<Map<String, dynamic>> data,
   ) {
@@ -73,25 +51,22 @@ class _RiwayatViewState extends State<RiwayatView> {
       final date = _parseDate(item['created_at']);
       if (date == null) return false;
 
-      final startCutoff = DateTime(
+      // cutoff "hari terpilih" jam 18:00
+      final cutoffToday = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
-        22,
-      ).subtract(const Duration(days: 1)); // start: hari sebelumnya jam 22
-      final endCutoff = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        22,
-      ); // end: hari ini jam 22
+        18,
+      );
 
       if (_selectedFilterType == FilterType.sekarang) {
-        return date.isAfter(startCutoff) && date.isBefore(endCutoff);
+        // Sekarang = [cutoffToday, cutoffToday+1day)
+        final cutoffNextDay = cutoffToday.add(const Duration(days: 1));
+        return !date.isBefore(cutoffToday) && date.isBefore(cutoffNextDay);
       } else if (_selectedFilterType == FilterType.kemarin) {
-        final yesterdayStart = startCutoff.subtract(const Duration(days: 1));
-        final yesterdayEnd = endCutoff.subtract(const Duration(days: 1));
-        return date.isAfter(yesterdayStart) && date.isBefore(yesterdayEnd);
+        // Kemarin = [cutoffToday-1day, cutoffToday)
+        final cutoffPrevDay = cutoffToday.subtract(const Duration(days: 1));
+        return !date.isBefore(cutoffPrevDay) && date.isBefore(cutoffToday);
       }
 
       return false;
@@ -100,29 +75,35 @@ class _RiwayatViewState extends State<RiwayatView> {
     // Group berdasarkan no_id
     for (var item in filtered) {
       final noId = item['no_id'] ?? 0;
-      if (!grouped.containsKey(noId)) {
-        grouped[noId] = [];
-      }
-      grouped[noId]!.add(item);
+      grouped.putIfAbsent(noId, () => []).add(item);
     }
 
     return grouped;
   }
 
+  DateTime _getAnchorDate(DateTime now) {
+    final cutoff = DateTime(now.year, now.month, now.day, 18);
+    if (now.isBefore(cutoff)) {
+      // Kalau sekarang masih < jam 18, berarti anchor = kemarin jam 18
+      return cutoff.subtract(const Duration(days: 1));
+    }
+    return cutoff;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final now = DateTime.now();
+    final anchorDate = _getAnchorDate(DateTime.now());
 
     final List<DateTime> dateButtons = List.generate(
       6,
-      (index) => now.subtract(Duration(days: index)),
+      (index) => anchorDate.subtract(Duration(days: index)),
     );
 
     return Scaffold(
       body: Column(
         children: [
-          _buildHeader(screenHeight),
+          HeaderWidget(screenHeight: screenHeight),
           const SizedBox(height: 16),
 
           /// Tombol filter tanggal
@@ -163,10 +144,7 @@ class _RiwayatViewState extends State<RiwayatView> {
                   },
                   child: Text(
                     label,
-                    style: GoogleFonts.jockeyOne(
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
+                    style: GoogleFonts.jockeyOne(fontSize: 14),
                   ),
                 );
               },
@@ -199,9 +177,8 @@ class _RiwayatViewState extends State<RiwayatView> {
                     child: Text(
                       "Total hari ini: Rp ${NumberFormat('#,###').format(totalSemua)}",
                       style: GoogleFonts.jockeyOne(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -210,7 +187,6 @@ class _RiwayatViewState extends State<RiwayatView> {
               return const SizedBox();
             },
           ),
-
           const Divider(height: 1),
           // List Pesanan
           Expanded(
@@ -230,7 +206,7 @@ class _RiwayatViewState extends State<RiwayatView> {
                   return Center(
                     child: Text(
                       "Tidak ada pesanan pada tanggal ini",
-                      style: GoogleFonts.jockeyOne(color: Colors.black),
+                      style: GoogleFonts.jockeyOne(fontSize: 18),
                     ),
                   );
                 }
@@ -281,30 +257,10 @@ class _PesananCardState extends State<PesananCard>
 
   @override
   Widget build(BuildContext context) {
-    // Ambil tanggal dari item pertama
-    final firstDate = widget.items.isNotEmpty
-        ? DateTime.tryParse(widget.items.first['created_at']?.toString() ?? '')
-        : null;
-
-    final dateStr = firstDate != null
-        ? DateFormat('dd MMM yyyy').format(firstDate)
-        : '-';
-
-    final timeStr = firstDate != null
-        ? DateFormat('HH:mm').format(firstDate)
-        : '-';
-
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: const Radius.circular(12),
-          bottom: Radius.circular(
-            _isExpanded ? 12 : 0,
-          ), // <- kalau tertutup lurus
-        ),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           // Header
@@ -319,9 +275,10 @@ class _PesananCardState extends State<PesananCard>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color.fromARGB(255, 255, 235, 213),
-                    Color.fromARGB(255, 190, 190, 190),
+                    const Color.fromARGB(255, 198, 187, 169),
+                    const Color.fromARGB(255, 183, 183, 183),
                   ],
+                  //255, 151, 151, 151
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -341,35 +298,21 @@ class _PesananCardState extends State<PesananCard>
                         style: GoogleFonts.jockeyOne(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 120, 120, 120),
+                          color: Colors.white,
                         ),
                       ),
                       if (widget.items.isNotEmpty) // Cek kalau ada data
-                        Row(
-                          children: [
-                            Text(
-                              DateFormat('dd MMM yyyy').format(
-                                // Pastikan ambil string dari database
-                                DateTime.tryParse(
-                                      (widget.items.first['timestamp'] ?? '')
-                                          .toString(),
-                                    ) ??
-                                    DateTime.now(),
-                              ),
-                              style: GoogleFonts.jockeyOne(
-                                fontSize: 14,
-                                color: const Color.fromARGB(255, 120, 120, 120),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              timeStr,
-                              style: GoogleFonts.jockeyOne(
-                                fontSize: 14,
-                                color: const Color.fromARGB(255, 120, 120, 120),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          DateFormat('dd MMM yyyy').format(
+                            DateTime.tryParse(
+                                  widget.items.first['created_at'] ?? '',
+                                ) ??
+                                DateTime.now(),
+                          ),
+                          style: GoogleFonts.jockeyOne(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
                         ),
                     ],
                   ),
@@ -404,61 +347,30 @@ class _PesananCardState extends State<PesananCard>
             child: _isExpanded
                 ? Column(
                     children: widget.items.map((item) {
-                      final catatan = DateTime.tryParse(item['note'] ?? '');
-
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['nama'] ?? '',
-                                        style: GoogleFonts.jockeyOne(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      Text(
-                                        (item['note'] ?? '')
-                                                .toString()
-                                                .isNotEmpty
-                                            ? item['note'].toString()
-                                            : "-",
-                                        style: GoogleFonts.jockeyOne(
-                                          fontSize: 14,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  "Rp ${NumberFormat('#,###').format(item['total'] ?? 0)}",
-                                  style: GoogleFonts.jockeyOne(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      final date = DateTime.tryParse(item['created_at'] ?? '');
+                      final dateStr = date != null
+                          ? DateFormat('dd MMM yyyy HH:mm').format(date)
+                          : '-';
+                      return ListTile(
+                        title: Text(
+                          item['nama'] ?? '',
+                          style: GoogleFonts.jockeyOne(fontSize: 16),
+                        ),
+                        subtitle: Text(
+                          dateStr,
+                          style: GoogleFonts.jockeyOne(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
-                          Divider(
-                            thickness: 1,
-                            color: Colors.grey.shade300,
-                            indent: 12,
-                            endIndent: 12,
+                        ),
+                        trailing: Text(
+                          "Rp ${NumberFormat('#,###').format(item['total'] ?? 0)}",
+                          style: GoogleFonts.jockeyOne(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
                           ),
-                        ],
+                        ),
                       );
                     }).toList(),
                   )

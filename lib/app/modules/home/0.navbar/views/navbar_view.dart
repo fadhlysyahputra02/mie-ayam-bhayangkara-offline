@@ -1,10 +1,10 @@
 // lib/app/modules/navbar/views/navbar_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kasir_mie_ayamku/app/modules/home/database%20tampilan/views/database_view.dart';
-import '../../antrean/views/antrean_view.dart';
-import '../../menu/views/menu_view.dart';
-import '../../riwayat/views/riwayat_view.dart';
+import 'package:kasir_mie_ayamku/app/modules/home/4.database%20tampilan/views/database_view.dart';
+import '../../2.antrean/views/antrean_view.dart';
+import '../../1.menu/views/menu_view.dart';
+import '../../3.riwayat/views/riwayat_view.dart';
 import '../controllers/navbar_controller.dart';
 
 class NavbarView extends StatelessWidget {
