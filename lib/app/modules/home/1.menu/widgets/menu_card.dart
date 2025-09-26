@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../views/quantity_button.dart';
 
 class MenuCard extends StatelessWidget {
@@ -12,7 +11,8 @@ class MenuCard extends StatelessWidget {
   final double topOffset;
   final double screenHeight;
   final Color bgColor;
-  final Function(int index, int newQty) onQuantityChanged; // Callback untuk update
+  final Function(int index, int newQty) onQuantityChanged;
+  final double titleTopPadding; // 👈 tambahan
 
   const MenuCard({
     super.key,
@@ -25,6 +25,7 @@ class MenuCard extends StatelessWidget {
     required this.screenHeight,
     required this.bgColor,
     required this.onQuantityChanged,
+    this.titleTopPadding = 0, // default 0
   });
 
   @override
@@ -38,10 +39,11 @@ class MenuCard extends StatelessWidget {
         color: bgColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: EdgeInsets.zero,
-        child: SizedBox(
-          height: screenHeight,
+        child: Container(
+          height: screenHeight, // tinggi card tetap
           child: Column(
             children: [
+              SizedBox(height: titleTopPadding), // 👈 jarak atas judul
               Text(
                 title,
                 style: GoogleFonts.jockeyOne(
@@ -50,10 +52,13 @@ class MenuCard extends StatelessWidget {
                   color: titleColor,
                 ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 8),
+
+              // Bagian scroll
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: menuList.length,
                   itemBuilder: (context, index) {
                     final item = menuList[index];
@@ -67,9 +72,12 @@ class MenuCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            item['nama'],
-                            style: GoogleFonts.jockeyOne(fontSize: 20),
+                          Expanded(
+                            child: Text(
+                              item['nama'],
+                              style: GoogleFonts.jockeyOne(fontSize: 20),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           QuantityButton(
                             quantity: qtyList[index],

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/db/database_helper.dart';
-import '../../../../widgets/header_widget.dart';
+import '../../../widgets/header_widget.dart';
 
 class DatabaseView extends StatefulWidget {
   const DatabaseView({super.key});

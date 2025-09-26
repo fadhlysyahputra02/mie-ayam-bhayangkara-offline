@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../data/db/database_helper.dart';
 import '../../../../data/menu_data.dart';
-import '../../../../widgets/header_widget.dart';
+import '../../../widgets/header_widget.dart';
 import 'package:get/get.dart';
 
 import '../widgets/buat_pesanan_button.dart';
@@ -35,19 +35,7 @@ class _MenuViewState extends State<MenuView> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
-          // Card Makanan (di atas)
-          MenuCard(
-            title: "Menu Makanan",
-            menuList: menuMakanan,
-            qtyList: qtyMakanan,
-            color: const Color(0xFFFFEBD5),
-            titleColor: Colors.black,
-            topOffset: screenHeight * 0.255,
-            screenHeight: screenHeight * 0.47,
-            bgColor: Colors.white,
-            onQuantityChanged: (index, newQty) => setState(() => qtyMakanan[index] = newQty),
-          ),
-
+          
           // Card Minuman (di bawah)
           MenuCard(
             title: "Menu Minuman",
@@ -55,10 +43,24 @@ class _MenuViewState extends State<MenuView> {
             qtyList: qtyMinuman,
             color: Colors.white,
             titleColor: Colors.black,
-            topOffset: screenHeight * 0.48,
+            topOffset: screenHeight * 0,
+            titleTopPadding: screenHeight * 0.5,
             screenHeight: screenHeight * 0.83,
             bgColor: const Color(0xFFFFEBD5),
             onQuantityChanged: (index, newQty) => setState(() => qtyMinuman[index] = newQty),
+          ),
+          // Card Makanan (di atas)
+          MenuCard(
+            title: "Menu Makanan",
+            menuList: menuMakanan,
+            qtyList: qtyMakanan,
+            color: const Color(0xFFFFEBD5),
+            titleColor: Colors.black,
+            topOffset: screenHeight * 0,
+            titleTopPadding: screenHeight * 0.258,
+            screenHeight: screenHeight * 0.49,
+            bgColor: Colors.white,
+            onQuantityChanged: (index, newQty) => setState(() => qtyMakanan[index] = newQty),
           ),
 
           // Header
@@ -116,40 +118,39 @@ class _MenuViewState extends State<MenuView> {
     }
 
     // Tampilkan bottom sheet konfirmasi
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => OrderConfirmationBottomSheet(
-        pesanan: pesanan,
-        onConfirm: (finalPesanan, pembeliNote) async {
-          // Insert ke DB
-          for (var item in finalPesanan) {
-            await DatabaseHelper.instance.insertPesanan(
-              item['nama'] as String,
-              item['qty'] as int,
-              item['total'] as int,
-              item['note'] as String,
-              pembeliNote,
-              status: 'true',
-            );
-          }
+    // Tampilkan bottom sheet konfirmasi
+await showModalBottomSheet(
+  context: context,
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  builder: (context) => OrderConfirmationBottomSheet(
+    pesanan: pesanan,
+    onConfirm: (finalPesanan, pembeliNote) async {
+      // Insert ke DB
+      for (var item in finalPesanan) {
+        await DatabaseHelper.instance.insertPesanan(
+          item['nama'] as String,
+          item['qty'] as int,
+          item['total'] as int,
+          item['note'] as String,
+          pembeliNote,
+          status: 'true',
+        );
+      }
 
-          // Reset qty UI
-          setState(() {
-            qtyMakanan = List.filled(qtyMakanan.length, 0);
-            qtyMinuman = List.filled(qtyMinuman.length, 0);
-          });
+      // Reset qty UI
+      setState(() {
+        qtyMakanan = List.filled(qtyMakanan.length, 0);
+        qtyMinuman = List.filled(qtyMinuman.length, 0);
+      });
+      // ✅ Tampilkan dialog sukses setelah bottom sheet tertutup
+      if (mounted) {
+        _showSuccessDialog();
+      }
+    },
+  ),
+);
 
-          Navigator.pop(context); // Tutup bottom sheet
-
-          // Tampilkan dialog sukses (gunakan dari confirmation_dialogs jika ada)
-          if (context.mounted) {
-            _showSuccessDialog();
-          }
-        },
-      ),
-    );
   }
 
   void _showSuccessDialog() {
