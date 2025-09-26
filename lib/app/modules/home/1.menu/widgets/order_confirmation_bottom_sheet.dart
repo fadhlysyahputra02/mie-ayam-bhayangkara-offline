@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../data/menu_data.dart';
+import 'note_shortcut.dart';
 
 class OrderConfirmationBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> pesanan;
@@ -62,13 +63,18 @@ class _OrderConfirmationBottomSheetState
           int optHarga = opt['harga'] as int;
 
           if (optNama == "Tambah Ceker") {
-            if (optQty == 1) {
-              subtotal += 2000 * qty;
+            if (optQty <= qty) {
+              // Kalau jumlah ceker <= jumlah makanan → Rp2000 per ceker
+              subtotal += optQty * 2000;
             } else {
-              subtotal += (optQty * 1500) ;
+              // Kalau jumlah ceker lebih banyak dari makanan
+              // pertama samakan dengan qty makanan → Rp2000 per ceker
+              subtotal += qty * 2000;
+              // sisanya dihitung Rp1500 per ceker
+              subtotal += (optQty - qty) * 1500;
             }
           } else {
-            subtotal += optHarga * optQty ;
+            subtotal += optHarga * optQty;
           }
         }
       }
@@ -255,7 +261,6 @@ class _OrderConfirmationBottomSheetState
 
               // Divider setelah list
               const Divider(),
-
               // Catatan pembeli
               TextField(
                 controller: pembeliNoteController,
@@ -268,6 +273,80 @@ class _OrderConfirmationBottomSheetState
                     borderSide: BorderSide.none,
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+
+              // ✅ Row Shortcut Buttons
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Grup kiri: jenis pakaian
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        NoteShortcutButton(
+                          label: "Baju",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Jaket",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Topi",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Kerudung",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Mobil",
+                          controller: pembeliNoteController,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Spacer kecil biar ada jarak
+                  const SizedBox(width: 12),
+
+                  // Grup kanan: warna
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        NoteShortcutButton(
+                          label: "Hitam",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Merah",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Putih",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Kuning",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Biru",
+                          controller: pembeliNoteController,
+                        ),
+                        NoteShortcutButton(
+                          label: "Hijau",
+                          controller: pembeliNoteController,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -284,7 +363,7 @@ class _OrderConfirmationBottomSheetState
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   ),
                 ],
