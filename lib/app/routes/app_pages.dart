@@ -1,7 +1,7 @@
 // lib/app/routes/app_pages.dart
 import 'package:get/get.dart';
 import 'package:kasir_mie_ayamku/app/modules/home/2.antrean/views/antrean_view.dart';
-import 'package:kasir_mie_ayamku/app/modules/home/4.database%20tampilan/views/database_view.dart';
+import 'package:kasir_mie_ayamku/app/modules/home/4.database_tampilan/views/database_view.dart';
 import 'package:kasir_mie_ayamku/app/modules/home/1.menu/binding/menu_binding.dart';
 import 'package:kasir_mie_ayamku/app/modules/home/1.menu/views/menu_view.dart';
 import 'package:kasir_mie_ayamku/app/modules/home/0.navbar/bindings/navbar_binding.dart';

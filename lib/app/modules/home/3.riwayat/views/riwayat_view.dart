@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../data/db/database_helper.dart';
 import '../../../widgets/header_widget.dart';
+import '../widgets/pesanan_card.dart';
 
 class RiwayatView extends StatefulWidget {
   const RiwayatView({super.key});
@@ -23,8 +24,6 @@ class _RiwayatViewState extends State<RiwayatView> {
   void initState() {
     super.initState();
     _loadPesanan();
-
-    // Set selectedDate ke anchorDate supaya langsung "Sekarang"
     _selectedDate = _getAnchorDate(DateTime.now());
     _selectedFilterType = FilterType.sekarang;
   }
@@ -37,7 +36,7 @@ class _RiwayatViewState extends State<RiwayatView> {
     if (dateString == null) return null;
     try {
       return DateTime.parse(dateString);
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -46,12 +45,10 @@ class _RiwayatViewState extends State<RiwayatView> {
     List<Map<String, dynamic>> data,
   ) {
     final Map<int, List<Map<String, dynamic>>> grouped = {};
-
     final filtered = data.where((item) {
       final date = _parseDate(item['created_at']);
       if (date == null) return false;
 
-      // cutoff "hari terpilih" jam 18:00
       final cutoffToday = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -60,33 +57,25 @@ class _RiwayatViewState extends State<RiwayatView> {
       );
 
       if (_selectedFilterType == FilterType.sekarang) {
-        // Sekarang = [cutoffToday, cutoffToday+1day)
         final cutoffNextDay = cutoffToday.add(const Duration(days: 1));
         return !date.isBefore(cutoffToday) && date.isBefore(cutoffNextDay);
       } else if (_selectedFilterType == FilterType.kemarin) {
-        // Kemarin = [cutoffToday-1day, cutoffToday)
         final cutoffPrevDay = cutoffToday.subtract(const Duration(days: 1));
         return !date.isBefore(cutoffPrevDay) && date.isBefore(cutoffToday);
       }
-
       return false;
     }).toList();
 
-    // Group berdasarkan no_id
     for (var item in filtered) {
       final noId = item['no_id'] ?? 0;
       grouped.putIfAbsent(noId, () => []).add(item);
     }
-
     return grouped;
   }
 
   DateTime _getAnchorDate(DateTime now) {
     final cutoff = DateTime(now.year, now.month, now.day, 18);
-    if (now.isBefore(cutoff)) {
-      // Kalau sekarang masih < jam 18, berarti anchor = kemarin jam 18
-      return cutoff.subtract(const Duration(days: 1));
-    }
+    if (now.isBefore(cutoff)) return cutoff.subtract(const Duration(days: 1));
     return cutoff;
   }
 
@@ -115,15 +104,11 @@ class _RiwayatViewState extends State<RiwayatView> {
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final date = dateButtons[index];
-                String label;
-                if (index == 0) {
-                  label = "Sekarang";
-                } else if (index == 1) {
-                  label = "Kemarin";
-                } else {
-                  label = DateFormat('dd/MM').format(date);
-                }
-
+                String label = (index == 0)
+                    ? "Sekarang"
+                    : (index == 1)
+                    ? "Kemarin"
+                    : DateFormat('dd/MM').format(date);
                 final isSelected =
                     DateFormat('yyyy-MM-dd').format(date) ==
                     DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -137,9 +122,7 @@ class _RiwayatViewState extends State<RiwayatView> {
                     ),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _selectedDate = date;
-                    });
+                    setState(() => _selectedDate = date);
                   },
                   child: Text(
                     label,
@@ -152,37 +135,52 @@ class _RiwayatViewState extends State<RiwayatView> {
 
           const SizedBox(height: 10),
 
-          /// Total pesanan di tanggal terpilih
+          /// Total pesanan
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _pesananFuture,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                final groupedData = _groupPesanan(snapshot.data!);
+                // Tentukan cutoff berdasarkan _selectedDate
+                final cutoffToday = DateTime(
+                  _selectedDate.year,
+                  _selectedDate.month,
+                  _selectedDate.day,
+                  18,
+                );
+                DateTime start, end;
 
-                // Tentukan anchor date
-                final anchorDate = _getAnchorDate(DateTime.now());
-                final startOfDay = anchorDate; // jam 18:00 hari anchor
-                final endOfDay = anchorDate.add(
-                  const Duration(days: 1),
-                ); // sampai 18:00 besok
+                if (_selectedFilterType == FilterType.sekarang) {
+                  start = cutoffToday;
+                  end = cutoffToday.add(const Duration(days: 1));
+                } else if (_selectedFilterType == FilterType.kemarin) {
+                  start = cutoffToday.subtract(const Duration(days: 1));
+                  end = cutoffToday;
+                } else {
+                  // Filter untuk tanggal lainnya (4 hari sebelumnya)
+                  start = DateTime(
+                    _selectedDate.year,
+                    _selectedDate.month,
+                    _selectedDate.day,
+                    0,
+                    0,
+                  );
+                  end = start.add(const Duration(days: 1));
+                }
 
-                // Filter pesanan berdasarkan rentang anchor day
-                final pesananHariIni = snapshot.data!.where((item) {
+                final pesananFiltered = snapshot.data!.where((item) {
                   final createdAt = DateTime.tryParse(item['created_at'] ?? '');
                   if (createdAt == null) return false;
-                  return createdAt.isAfter(startOfDay) &&
-                      createdAt.isBefore(endOfDay);
+                  return !createdAt.isBefore(start) && createdAt.isBefore(end);
                 }).toList();
 
-                // Hitung total harga hari ini
-                // Total harga hari ini (makanan + minuman)
-                num totalSemua = pesananHariIni.fold<num>(
+                // Hitung total harga
+                num totalSemua = pesananFiltered.fold<num>(
                   0,
                   (sum, item) => sum + (item['total'] ?? 0),
                 );
 
-                // Total qty makanan saja
-                int totalQtyMakanan = pesananHariIni
+                // Hitung total porsi mie sesuai filter
+                int totalQtyMakanan = pesananFiltered
                     .where((item) => item['kategori'] == 'makanan')
                     .fold<int>(0, (sum, item) => sum + (item['qty'] as int));
 
@@ -194,7 +192,6 @@ class _RiwayatViewState extends State<RiwayatView> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Total harga
                       Text(
                         "Total hari ini: Rp ${NumberFormat('#,###').format(totalSemua)}",
                         style: GoogleFonts.jockeyOne(
@@ -202,8 +199,6 @@ class _RiwayatViewState extends State<RiwayatView> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
-                      // Total qty makanan pakai badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -243,199 +238,50 @@ class _RiwayatViewState extends State<RiwayatView> {
               return const SizedBox();
             },
           ),
+
           const Divider(height: 1),
-          // List Pesanan
+
+          /// List Pesanan
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _pesananFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting)
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty)
                   return Center(
                     child: Text(
                       "Tidak ada data",
                       style: GoogleFonts.jockeyOne(fontSize: 18),
                     ),
                   );
-                }
 
                 final groupedData = _groupPesanan(snapshot.data!);
-
-                if (groupedData.isEmpty) {
+                if (groupedData.isEmpty)
                   return Center(
                     child: Text(
                       "Tidak ada pesanan pada tanggal ini",
                       style: GoogleFonts.jockeyOne(fontSize: 18),
                     ),
                   );
-                }
 
                 return ListView(
                   padding: const EdgeInsets.all(8),
-                  children: groupedData.entries.map((entry) {
-                    final totalHari = entry.value.fold<num>(
-                      0,
-                      (sum, item) => sum + (item['total'] ?? 0),
-                    );
-
-                    return PesananCard(
-                      noId: entry.key,
-                      totalHari: totalHari,
-                      items: entry.value,
-                    );
-                  }).toList(),
+                  children: groupedData.entries
+                      .map(
+                        (entry) => PesananCard(
+                          noId: entry.key,
+                          totalHari: entry.value.fold<num>(
+                            0,
+                            (sum, item) => sum + (item['total'] ?? 0),
+                          ),
+                          items: entry.value,
+                        ),
+                      )
+                      .toList(),
                 );
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class PesananCard extends StatefulWidget {
-  final int noId;
-  final num totalHari;
-  final List<Map<String, dynamic>> items;
-
-  const PesananCard({
-    Key? key,
-    required this.noId,
-    required this.totalHari,
-    required this.items,
-  }) : super(key: key);
-
-  @override
-  State<PesananCard> createState() => _PesananCardState();
-}
-
-class _PesananCardState extends State<PesananCard>
-    with SingleTickerProviderStateMixin {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          // Header
-          InkWell(
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color.fromARGB(255, 198, 187, 169),
-                    const Color.fromARGB(255, 183, 183, 183),
-                  ],
-                  //255, 151, 151, 151
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Kolom kiri: No ID + Tanggal
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "No ID: ${widget.noId}",
-                        style: GoogleFonts.jockeyOne(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (widget.items.isNotEmpty) // Cek kalau ada data
-                        Text(
-                          DateFormat('dd MMM yyyy').format(
-                            DateTime.tryParse(
-                                  widget.items.first['created_at'] ?? '',
-                                ) ??
-                                DateTime.now(),
-                          ),
-                          style: GoogleFonts.jockeyOne(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  // Kolom kanan: Total + Icon Expand
-                  Row(
-                    children: [
-                      Text(
-                        "Rp ${NumberFormat('#,###').format(widget.totalHari)}",
-                        style: GoogleFonts.jockeyOne(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Animasi buka-tutup
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: _isExpanded
-                ? Column(
-                    children: widget.items.map((item) {
-                      final date = DateTime.tryParse(item['created_at'] ?? '');
-                      final dateStr = date != null
-                          ? DateFormat('dd MMM yyyy HH:mm').format(date)
-                          : '-';
-                      return ListTile(
-                        title: Text(
-                          "${item['nama'] ?? ''} x${item['qty'] ?? 0}",
-                          style: GoogleFonts.jockeyOne(fontSize: 16),
-                        ),
-                        subtitle: Text(
-                          dateStr,
-                          style: GoogleFonts.jockeyOne(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        trailing: Text(
-                          "Rp ${NumberFormat('#,###').format(item['total'] ?? 0)}",
-                          style: GoogleFonts.jockeyOne(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  )
-                : const SizedBox.shrink(),
           ),
         ],
       ),

@@ -21,7 +21,7 @@ class DraggableFab extends StatefulWidget {
 }
 
 class _DraggableFabState extends State<DraggableFab> {
-  double top = 200;
+  double top = 500;
   double left = 20;
   double fabSize = 60;
   bool isDragging = false;

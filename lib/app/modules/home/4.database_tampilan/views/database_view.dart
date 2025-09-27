@@ -107,7 +107,7 @@ class _DatabaseViewState extends State<DatabaseView> {
         backgroundColor: const Color(0xFFFFF8F0),
         title: const Text("Konfirmasi", style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
-          "Apakah Anda yakin ingin menghapus SEMUA DATA?",
+          "Apakah Anda yakin ingin menghapus SEMUA DATA SECARA PERMANEN?",
           style: GoogleFonts.jockeyOne(fontSize: 16),
         ),
         actions: [

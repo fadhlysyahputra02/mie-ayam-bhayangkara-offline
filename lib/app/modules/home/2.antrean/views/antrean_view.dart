@@ -40,17 +40,17 @@ class _AntreanPageState extends State<AntreanPage> {
     final GlobalKey _headerKey = GlobalKey();
     double _headerHeight = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-  final context = _headerKey.currentContext;
-  if (context != null) {
-    final box = context.findRenderObject() as RenderBox;
-    final newHeight = box.size.height;
-    if (_headerHeight != newHeight) {
-      setState(() {
-        _headerHeight = newHeight;
-      });
-    }
-  }
-});
+      final context = _headerKey.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox;
+        final newHeight = box.size.height;
+        if (_headerHeight != newHeight) {
+          setState(() {
+            _headerHeight = newHeight;
+          });
+        }
+      }
+    });
     return Scaffold(
       body: Column(
         children: [
@@ -138,12 +138,13 @@ class _AntreanPageState extends State<AntreanPage> {
                       ),
                     ),
                     DraggableFab(
-  icon: Icons.delete,
-  minTop: _headerHeight + 10, // supaya FAB mulai di bawah header
-  maxTop: MediaQuery.of(context).size.height - 120,
-  onPressed: () => _deleteAllAntrean(context),
-),
-
+                      icon: Icons.delete,
+                      minTop:
+                          _headerHeight +
+                          10, // supaya FAB mulai di bawah header
+                      maxTop: MediaQuery.of(context).size.height - 120,
+                      onPressed: () => _deleteAllAntrean(context),
+                    ),
                   ],
                 );
               },

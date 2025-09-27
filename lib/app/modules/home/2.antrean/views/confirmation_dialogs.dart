@@ -69,7 +69,7 @@ class ConfirmationDialogs {
           ],
         ),
         content: Text(
-          "Apakah Anda yakin ingin menghapus\nSEMUA ANTREAN",
+          "Apakah Anda yakin ingin menghapus\nSEMUA ANTREAN\ndan mengganti statusnya ke\nSELEESAI BAYAR SEMUA?",
           style: GoogleFonts.jockeyOne(fontSize: 16),
           textAlign: TextAlign.center,
         ),
