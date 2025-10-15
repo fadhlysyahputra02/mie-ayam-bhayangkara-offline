@@ -92,8 +92,7 @@ class _RiwayatViewState extends State<RiwayatView> {
       body: Column(
         children: [
           HeaderWidget(screenHeight: screenHeight),
-          const SizedBox(height: 16),
-
+          SizedBox(height: 5,),
           /// Tombol filter tanggal
           SizedBox(
             height: 40,

@@ -21,7 +21,14 @@ class _NoteChoiceGroupState extends State<NoteChoiceGroup> {
     setState(() {
       selected = label;
     });
-    widget.controller.text = label;
+    // Jika TextField masih kosong, langsung isi.
+    // Kalau sudah ada isinya, tambahkan dengan pemisah koma atau spasi.
+    if (widget.controller.text.isEmpty) {
+      widget.controller.text = label;
+    } else {
+      widget.controller.text +=
+          " $label"; // bisa ganti dengan " $label" kalau tanpa koma
+    }
 
     widget.controller.selection = TextSelection.fromPosition(
       TextPosition(offset: widget.controller.text.length),

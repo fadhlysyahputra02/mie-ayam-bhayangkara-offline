@@ -117,8 +117,6 @@ class _MenuViewState extends State<MenuView> {
       );
       return;
     }
-
-    // Tampilkan bottom sheet konfirmasi
     // Tampilkan bottom sheet konfirmasi
     await showModalBottomSheet(
       context: context,

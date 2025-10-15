@@ -64,15 +64,10 @@ class _OrderConfirmationBottomSheetState
           int optHarga = opt['harga'] as int;
 
           if (optNama == "Tambah Ceker") {
-            if (optQty <= qty) {
-              // Kalau jumlah ceker <= jumlah makanan → Rp2000 per ceker
-              subtotal += optQty * 2000;
+            if (optQty == 1) {
+              subtotal += 2000;
             } else {
-              // Kalau jumlah ceker lebih banyak dari makanan
-              // pertama samakan dengan qty makanan → Rp2000 per ceker
-              subtotal += qty * 2000;
-              // sisanya dihitung Rp1500 per ceker
-              subtotal += (optQty - qty) * 1500;
+              subtotal += optQty * 1500;
             }
           } else {
             subtotal += optHarga * optQty;
@@ -146,13 +141,31 @@ class _OrderConfirmationBottomSheetState
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  const Color.fromARGB(
+                                    255,
+                                    255,
+                                    207,
+                                    157,
+                                  ), // Cream (atas)
+                                  Colors.white, // Putih (bawah)
+                                ],
+                              ),
+                            ),
+
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               title: Text(
                                 item['nama'],
                                 style: GoogleFonts.jockeyOne(fontSize: 20),
@@ -167,39 +180,52 @@ class _OrderConfirmationBottomSheetState
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: itemNoteControllers[index],
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: const Color.fromARGB(
-                                  255,
-                                  255,
-                                  235,
-                                  213,
-                                ),
-                                labelText: "Catatan untuk item ini",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide.none,
+                          ),
+                          Container(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 2,
+                                right: 2,
+                                bottom: 7,
+                              ),
+                              child: TextField(
+                                controller: itemNoteControllers[index],
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  labelStyle: TextStyle(
+                                    color: const Color.fromARGB(
+                                      146,
+                                      120,
+                                      120,
+                                      120,
+                                    ),
+                                  ),
+                                  fillColor: const Color.fromARGB(
+                                    39,
+                                    109,
+                                    109,
+                                    109,
+                                  ),
+                                  labelText: "Masukkan catatan...",
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                    borderSide: BorderSide.none,
+                                  ),
                                 ),
                               ),
                             ),
-                            // Opsi tambahan (hanya makanan)
-                            if (isItemMakanan[index]) ...[
-                              const SizedBox(height: 10),
-                              const Text(
-                                "Request",
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 6),
-                              Column(
+                          ),
+                          // Opsi tambahan (hanya makanan)
+                          if (isItemMakanan[index]) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(left: 5, right: 5),
+                              child: Column(
                                 children: tambahanPerItem[index].map((opt) {
                                   final String nama = opt['nama'] as String;
                                   final int harga = opt['harga'] as int;
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 4.0,
+                                      vertical: 1.0,
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
@@ -251,9 +277,9 @@ class _OrderConfirmationBottomSheetState
                                   );
                                 }).toList(),
                               ),
-                            ],
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     );
                   },
@@ -261,22 +287,35 @@ class _OrderConfirmationBottomSheetState
               ),
 
               // Divider setelah list
-              const Divider(),
+              const Divider(
+                height: 20,
+                thickness: 7,
+                color: Color.fromARGB(255, 91, 91, 91),
+                radius: BorderRadiusGeometry.all(Radius.circular(20)),
+              ),
               // Catatan pembeli
               TextField(
                 controller: pembeliNoteController,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color.fromARGB(63, 92, 92, 92),
                   labelText: "Catatan ciri pembeli",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.backspace),
+                    onPressed: () {
+                      setState(() {
+                        pembeliNoteController.clear();
+                      });
+                    },
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
 
+              const SizedBox(height: 8),
               // ✅ Row Shortcut Buttons
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,12 +324,13 @@ class _OrderConfirmationBottomSheetState
                   Expanded(
                     child: NoteChoiceGroup(
                       options: [
+                        "laki-laki",
+                        "Perempuan",
                         "Baju",
                         "Jaket",
                         "Topi",
                         "Kerudung",
                         "Kemeja",
-                        "Mobil",
                       ],
                       controller: pembeliNoteController,
                     ),
@@ -347,6 +387,11 @@ class _OrderConfirmationBottomSheetState
                         ColorShortcutButton(
                           label: "Pink",
                           color: const Color.fromARGB(255, 255, 50, 119),
+                          controller: pembeliNoteController,
+                        ),
+                        ColorShortcutButton(
+                          label: "abu-abu",
+                          color: const Color.fromARGB(255, 132, 114, 119),
                           controller: pembeliNoteController,
                         ),
                       ],

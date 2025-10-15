@@ -108,6 +108,44 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> tambahTambahan(int noId, int tambahan) async {
+    final db = await database;
+
+    await db.rawUpdate(
+      '''
+    UPDATE pesanan 
+    SET total = total + ? 
+    WHERE no_id = ?
+  ''',
+      [tambahan, noId],
+    );
+  }
+
+  Future<int> tambahItemTambahan({
+    required int noId,
+    required String nama,
+    required int qty,
+    int harga = 1000,
+  }) async {
+    final db = await database;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    final data = {
+      'nama': nama,
+      'qty': qty,
+      'total': harga * qty,
+      'note': '',
+      'kategori': 'tambahan',
+      'ciri_pembeli': '-',
+      'created_at': DateTime.now().toIso8601String(),
+      'no_id': noId,
+      'timestamp': timestamp,
+      'status': 'true',
+    };
+
+    return await db.insert('pesanan', data);
+  }
+
   Future<int> SelesaiBayarSemua() async {
     final db = await database;
     return await db.update(
@@ -145,5 +183,26 @@ class DatabaseHelper {
   Future<int> updateTimestamp(int noId, int newTimestamp) async {
     final db = await database;
     return await PesananHelper.updatePesananTimestamp(db, noId, newTimestamp);
+  }
+
+  Future<void> deleteOldPesanan() async {
+    final db = await database;
+
+    // Ambil waktu saat ini
+    final now = DateTime.now();
+
+    // Tentukan batas 7 hari yang lalu dari jam 22:00
+    final sevenDaysAgoAt22 = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      22, // jam 22:00 hari ini
+    ).subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+
+    await db.delete(
+      'pesanan',
+      where: 'timestamp < ?',
+      whereArgs: [sevenDaysAgoAt22],
+    );
   }
 }

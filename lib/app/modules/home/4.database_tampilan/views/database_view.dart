@@ -21,6 +21,7 @@ class _DatabaseViewState extends State<DatabaseView> {
   }
 
   void _loadPesanan() {
+    DatabaseHelper.instance.deleteOldPesanan(); // ✅ Hapus data lama dulu
     _pesananFuture = DatabaseHelper.instance.getPesanan();
   }
 

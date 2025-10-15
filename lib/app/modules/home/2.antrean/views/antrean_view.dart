@@ -192,12 +192,121 @@ class _AntreanPageState extends State<AntreanPage> {
   }
 
   Future<void> _handleSelesaiBayar(int noId) async {
+    int krupukQty = 0;
+    int klubGelasQty = 0;
+
+    final tambahan = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: const Color(0xFFFFF8F0),
+        title: Row(
+          children: const [
+            Icon(Icons.restaurant_menu, color: Colors.orange, size: 28),
+            SizedBox(width: 8),
+            Text(
+              "Tambahan",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildQtyRow("Krupuk", krupukQty, (delta) {
+              krupukQty = (krupukQty + delta).clamp(0, 100);
+              (context as Element).markNeedsBuild(); // agar rebuild UI
+            }),
+            const SizedBox(height: 8),
+            _buildQtyRow("Klub Gelas", klubGelasQty, (delta) {
+              klubGelasQty = (klubGelasQty + delta).clamp(0, 100);
+              (context as Element).markNeedsBuild();
+            }),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).pop({"krupuk": krupukQty, "klubGelas": klubGelasQty}),
+            icon: const Icon(Icons.check, size: 18, color: Colors.white),
+            label: const Text(
+              "Tambahkan",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (tambahan != null) {
+      if ((tambahan["krupuk"] ?? 0) > 0) {
+        await DatabaseHelper.instance.tambahItemTambahan(
+          noId: noId,
+          nama: "Krupuk",
+          qty: tambahan["krupuk"]!,
+        );
+      }
+      if ((tambahan["klubGelas"] ?? 0) > 0) {
+        await DatabaseHelper.instance.tambahItemTambahan(
+          noId: noId,
+          nama: "Klub Gelas",
+          qty: tambahan["klubGelas"]!,
+        );
+      }
+    }
+
     await DatabaseHelper.instance.SelesaiBayar(noId, true);
+
     ConfirmationDialogs.showAutoDismiss(
       context,
       Icons.check_circle,
       Colors.red,
       "Pesanan Telah Dibayar",
+    );
+
+    await _loadPesanan();
+  }
+
+  // Tetap pakai helper untuk row qty
+  Widget _buildQtyRow(
+    String nama,
+    int qty,
+    void Function(int delta) onChanged,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          nama,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.remove_circle_outline),
+              onPressed: () => onChanged(-1),
+            ),
+            Text("$qty", style: const TextStyle(fontSize: 16)),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: () => onChanged(1),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
