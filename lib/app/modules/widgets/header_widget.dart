@@ -49,27 +49,24 @@ class HeaderWidget extends StatelessWidget {
               ),
             ),
             Align(
-              alignment: Alignment.center,
+              alignment: Alignment.centerLeft,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
                     height: screenHeight * 0.169,
                     child: Image.asset(
-                      'assets/image/WajahAyah.png', // ganti sesuai path image
+                      'assets/image/WajahAyah.png',
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(width: 1), // jarak antara gambar dan teks
-                  Expanded(
-                    child: Text(
-                      "Mie Ayam \nBhayangkara",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.jockeyOne(
-                        fontSize: screenHeight * 0.05,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Text(
+                    "Mie Ayam \nBhayangkara",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.jockeyOne(
+                      fontSize: screenHeight * 0.05,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
