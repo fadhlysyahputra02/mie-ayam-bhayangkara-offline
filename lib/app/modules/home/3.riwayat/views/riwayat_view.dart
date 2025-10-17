@@ -49,6 +49,11 @@ class _RiwayatViewState extends State<RiwayatView> {
       final date = _parseDate(item['created_at']);
       if (date == null) return false;
 
+      // Filter status selesai_bayar
+      if ((item['status'] ?? '') != 'selesai_masak' &&
+          (item['status'] ?? '') != 'selesai_bayar')
+        return false;
+
       final cutoffToday = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -63,7 +68,7 @@ class _RiwayatViewState extends State<RiwayatView> {
         final cutoffPrevDay = cutoffToday.subtract(const Duration(days: 1));
         return !date.isBefore(cutoffPrevDay) && date.isBefore(cutoffToday);
       }
-      return false;
+      return true;
     }).toList();
 
     for (var item in filtered) {
@@ -92,7 +97,8 @@ class _RiwayatViewState extends State<RiwayatView> {
       body: Column(
         children: [
           HeaderWidget(screenHeight: screenHeight),
-          SizedBox(height: 5,),
+          SizedBox(height: 5),
+
           /// Tombol filter tanggal
           SizedBox(
             height: 40,
@@ -166,12 +172,16 @@ class _RiwayatViewState extends State<RiwayatView> {
                   end = start.add(const Duration(days: 1));
                 }
 
+                // Di bagian FutureBuilder
                 final pesananFiltered = snapshot.data!.where((item) {
                   final createdAt = DateTime.tryParse(item['created_at'] ?? '');
                   if (createdAt == null) return false;
+
+                  // Filter status selesai_bayar
+                  if ((item['status'] ?? '') != 'selesai_bayar') return false;
+
                   return !createdAt.isBefore(start) && createdAt.isBefore(end);
                 }).toList();
-
                 // Hitung total harga
                 num totalSemua = pesananFiltered.fold<num>(
                   0,
@@ -255,18 +265,38 @@ class _RiwayatViewState extends State<RiwayatView> {
                     ),
                   );
 
-                final groupedData = _groupPesanan(snapshot.data!);
-                if (groupedData.isEmpty)
+                // Filter status "selesai_bayar"
+                final selesaiMasakData = snapshot.data!
+                    .where(
+                      (item) =>
+                          item['status'] == 'selesai_masak' ||
+                          item['status'] == 'selesai_bayar',
+                    )
+                    .toList();
+
+                final groupedData = _groupPesanan(selesaiMasakData);
+
+                // Urutkan descending berdasarkan created_at terakhir di tiap group
+                final sortedEntries = groupedData.entries.toList()
+                  ..sort((a, b) {
+                    final aLatest = a.value.last['created_at'] ?? '';
+                    final bLatest = b.value.last['created_at'] ?? '';
+                    return bLatest.compareTo(
+                      aLatest,
+                    ); // descending: terbaru paling atas
+                  });
+
+                if (sortedEntries.isEmpty)
                   return Center(
                     child: Text(
-                      "Tidak ada pesanan pada tanggal ini",
+                      "Tidak ada pesanan selesai bayar pada tanggal ini",
                       style: GoogleFonts.jockeyOne(fontSize: 18),
                     ),
                   );
 
                 return ListView(
                   padding: const EdgeInsets.all(8),
-                  children: groupedData.entries
+                  children: sortedEntries
                       .map(
                         (entry) => PesananCard(
                           noId: entry.key,

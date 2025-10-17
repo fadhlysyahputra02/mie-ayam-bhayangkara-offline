@@ -18,7 +18,16 @@ class DatabaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalGroup = items.fold<int>(
+    // Urutkan items berdasarkan kategori
+    final sortedItems = List<Map<String, dynamic>>.from(items);
+    sortedItems.sort((a, b) {
+      const order = ['makanan', 'minuman', 'tambahan'];
+      final aIndex = order.indexOf((a['kategori'] ?? '').toLowerCase());
+      final bIndex = order.indexOf((b['kategori'] ?? '').toLowerCase());
+      return aIndex.compareTo(bIndex);
+    });
+
+    final totalGroup = sortedItems.fold<int>(
       0,
       (sum, item) => sum + ((item['total'] ?? 0) as num).toInt(),
     );
@@ -33,7 +42,7 @@ class DatabaseCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              children: items.map((item) {
+              children: sortedItems.map((item) {
                 return DatabaseItemCard(item: item);
               }).toList(),
             ),
@@ -49,15 +58,21 @@ class DatabaseCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.orange.shade100,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16), topRight: Radius.circular(16),
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("ID: $noId", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          Text("Total: Rp ${NumberFormat('#,###').format(totalGroup)}",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            "ID: $noId",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          Text(
+            "Total: Rp ${NumberFormat('#,###').format(totalGroup)}",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           Row(
             children: [
               IconButton(
@@ -83,10 +98,15 @@ class DatabaseCard extends StatelessWidget {
                         selectedTime.minute,
                       ).millisecondsSinceEpoch;
 
-                      await DatabaseHelper.instance.updateTimestamp(noId, newTimestamp);
+                      await DatabaseHelper.instance.updateTimestamp(
+                        noId,
+                        newTimestamp,
+                      );
                       onRefresh();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Timestamp berhasil diupdate")),
+                        const SnackBar(
+                          content: Text("Timestamp berhasil diupdate"),
+                        ),
                       );
                     }
                   }
@@ -101,8 +121,14 @@ class DatabaseCard extends StatelessWidget {
                       title: const Text("Konfirmasi"),
                       content: const Text("Hapus data ini?"),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Batal")),
-                        ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Ya")),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("Batal"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Ya"),
+                        ),
                       ],
                     ),
                   );

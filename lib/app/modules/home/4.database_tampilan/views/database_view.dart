@@ -13,16 +13,45 @@ class DatabaseView extends StatefulWidget {
 
 class _DatabaseViewState extends State<DatabaseView> {
   late Future<List<Map<String, dynamic>>> _pesananFuture;
+  List<Map<String, dynamic>> _allPesanan = [];
+  List<Map<String, dynamic>> _filteredPesanan = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadPesanan();
+    _searchController.addListener(_filterPesanan);
   }
 
-  void _loadPesanan() {
-    DatabaseHelper.instance.deleteOldPesanan(); // ✅ Hapus data lama dulu
-    _pesananFuture = DatabaseHelper.instance.getPesanan();
+  void _loadPesanan() async {
+    await DatabaseHelper.instance.deleteOldPesanan();
+    final data = await DatabaseHelper.instance.getPesanan();
+    setState(() {
+      _allPesanan = List<Map<String, dynamic>>.from(data);
+      _filteredPesanan = List<Map<String, dynamic>>.from(_allPesanan);
+    });
+  }
+
+  void _filterPesanan() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() => _filteredPesanan = List.from(_allPesanan));
+    } else {
+      setState(() {
+        _filteredPesanan = _allPesanan.where((item) {
+          final idStr = item['no_id'].toString();
+          final timestampStr = item['timestamp'].toString();
+          return idStr.contains(query) || timestampStr.contains(query);
+        }).toList();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -33,126 +62,59 @@ class _DatabaseViewState extends State<DatabaseView> {
       body: Column(
         children: [
           HeaderWidget(screenHeight: screenHeight),
-          Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _pesananFuture,
-              builder: (context, snapshot) {
-                final parentContext = context;
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Text(
-                      "Belum ada data",
-                      style: GoogleFonts.jockeyOne(fontSize: 18),
-                    ),
-                  );
-                }
-
-                final pesananList = snapshot.data!;
-                final Map<int, List<Map<String, dynamic>>> groupedPesanan = {};
-                for (var item in pesananList) {
-                  final noId = item['no_id'] ?? 0;
-                  groupedPesanan.putIfAbsent(noId, () => []).add(item);
-                }
-
-                return Stack(
-                  children: [
-                    RefreshIndicator(
-                      onRefresh: () async => setState(() => _loadPesanan()),
-                      child: ListView(
-                        padding: const EdgeInsets.all(8),
-                        children: groupedPesanan.entries.map((entry) {
-                          return DatabaseCard(
-                            noId: entry.key,
-                            items: entry.value,
-                            onRefresh: () => setState(() => _loadPesanan()),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    // Floating Action Button Hapus Semua
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: FloatingActionButton(
-                        backgroundColor: Colors.red,
-                        onPressed: () async {
-                          final confirm = await _confirmDeleteAll(context);
-                          if (confirm == true) {
-                            await DatabaseHelper.instance.deleteAllPesanan();
-                            setState(() => _loadPesanan());
-                            _showDeletedDialog(parentContext);
-                          }
-                        },
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool?> _confirmDeleteAll(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: const Color(0xFFFFF8F0),
-        title: const Text("Konfirmasi", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(
-          "Apakah Anda yakin ingin menghapus SEMUA DATA SECARA PERMANEN?",
-          style: GoogleFonts.jockeyOne(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal"),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            icon: const Icon(Icons.delete_forever, color: Colors.white),
-            label: const Text("Hapus", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeletedDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        Future.delayed(const Duration(milliseconds: 700), () {
-          Navigator.of(context).pop(true);
-        });
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: const Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.delete, color: Colors.red, size: 32),
-                SizedBox(width: 12),
-                Text(
-                  "Pesanan berhasil dihapus",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Cari data berdasarkan ID...",
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
+              ),
+              keyboardType: TextInputType.number,
             ),
           ),
-        );
-      },
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => _loadPesanan(),
+              child: _filteredPesanan.isEmpty
+                  ? const Center(child: Text("Belum ada data"))
+                  : ListView(
+                      padding: const EdgeInsets.all(8),
+                      children: _groupedPesananWidgets(),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  List<Widget> _groupedPesananWidgets() {
+    // Urutkan dulu dari terbaru ke lama
+    _filteredPesanan.sort((a, b) {
+      final aDate =
+          DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+      final bDate =
+          DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+      return bDate.compareTo(aDate);
+    });
+
+    // Grouping berdasarkan no_id
+    final Map<int, List<Map<String, dynamic>>> groupedPesanan = {};
+    for (var item in _filteredPesanan) {
+      final noId = item['no_id'] ?? 0;
+      groupedPesanan.putIfAbsent(noId, () => []).add(item);
+    }
+
+    return groupedPesanan.entries.map((entry) {
+      return DatabaseCard(
+        noId: entry.key,
+        items: entry.value,
+        onRefresh: () => _loadPesanan(),
+      );
+    }).toList();
   }
 }

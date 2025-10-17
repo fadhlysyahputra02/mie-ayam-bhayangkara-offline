@@ -289,7 +289,7 @@ class _OrderConfirmationBottomSheetState
               // Divider setelah list
               const Divider(
                 height: 20,
-                thickness: 7,
+                thickness: 3,
                 color: Color.fromARGB(255, 91, 91, 91),
                 radius: BorderRadiusGeometry.all(Radius.circular(20)),
               ),

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-
 import 'confirmation_dialogs.dart';
 
-class OrderCard extends StatelessWidget {
+class OrderCard extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final int noId;
   final Function(Map<String, dynamic>) onEdit;
   final VoidCallback onSelesaiMasak;
-  final VoidCallback onSelesaiBayar;
+  final void Function(Map<String, int>) onSelesaiBayar;
 
   const OrderCard({
     super.key,
@@ -21,15 +20,22 @@ class OrderCard extends StatelessWidget {
   });
 
   @override
+  State<OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<OrderCard> {
+  Map<String, int>? _pendingTambahan;
+
+  @override
   Widget build(BuildContext context) {
-    final waktu = items.first['timestamp'];
-    final ciriPembeli = items.first['ciri_pembeli'] ?? '-';
-    final isSelesaiMasak = items.first['status'] == 'selesai_masak';
+    final waktu = widget.items.first['timestamp'];
+    final ciriPembeli = widget.items.first['ciri_pembeli'] ?? '-';
+    final isSelesaiMasak = widget.items.first['status'] == 'selesai_masak';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Dismissible(
-        key: ValueKey(noId),
+        key: ValueKey(widget.noId),
         direction: DismissDirection.horizontal,
         background: _buildBackground(
           Alignment.centerLeft,
@@ -45,16 +51,18 @@ class OrderCard extends StatelessWidget {
             _confirmDismiss(context, direction, isSelesaiMasak),
         onDismissed: (direction) {
           if (direction == DismissDirection.startToEnd) {
-            onSelesaiMasak();
-          } else if (direction == DismissDirection.endToStart) {
-            onSelesaiBayar();
+            widget.onSelesaiMasak();
+          } else if (direction == DismissDirection.endToStart &&
+              _pendingTambahan != null) {
+            widget.onSelesaiBayar(_pendingTambahan!);
+            _pendingTambahan = null;
           }
         },
         child: Card(
           elevation: 4,
           color: isSelesaiMasak
               ? const Color.fromARGB(255, 173, 216, 230)
-              : const Color.fromARGB(255, 255, 255, 255),
+              : Colors.white,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -85,7 +93,7 @@ class OrderCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        "Pesanan ID: $noId",
+                        "Pesanan ID: ${widget.noId}",
                         style: GoogleFonts.jockeyOne(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -105,7 +113,7 @@ class OrderCard extends StatelessWidget {
                 ),
                 const Divider(height: 16, thickness: 1),
                 // Menu items
-                ...items.map((item) => _buildMenuItem(item)).toList(),
+                ...widget.items.map((item) => _buildMenuItem(item)).toList(),
                 const Divider(height: 16, thickness: 1),
                 // Total
                 Row(
@@ -122,7 +130,7 @@ class OrderCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(right: 18),
                       child: Text(
-                        "Rp ${items.fold<int>(0, (sum, item) => sum + (item['total'] as num).toInt())}",
+                        "Rp ${widget.items.fold<int>(0, (sum, item) => sum + (item['total'] as num).toInt())}",
                         style: GoogleFonts.jockeyOne(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -152,26 +160,120 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  Future<bool?> _confirmDismiss(
+  Future<bool> _confirmDismiss(
     BuildContext context,
     DismissDirection direction,
     bool isSelesaiMasak,
   ) async {
-    String title, message;
     if (direction == DismissDirection.startToEnd) {
-      title = "Konfirmasi";
-      message = "Tandai pesanan ini sebagai 'SELESAI MASAK'?";
-    } else {
-      title = "Konfirmasi";
-      message = "Tandai pesanan ini sebagai 'SELESAI BAYAR'?";
+      // Swipe kanan → selesai masak
+      final result = await ConfirmationDialogs.showConfirm(
+        context,
+        "Konfirmasi",
+        "Tandai pesanan ini sebagai 'SELESAI MASAK'?",
+        icon: Icons.restaurant_menu,
+        iconColor: Colors.orange,
+      );
+      return result ?? false;
+    } else if (direction == DismissDirection.endToStart) {
+      // Swipe kiri → konfirmasi bayar
+      int krupukQty = 0;
+      int klubGelasQty = 0;
+
+      final result = await showDialog<Map<String, int>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: const Color(0xFFFFF8F0),
+            title: Row(
+              children: const [
+                Icon(Icons.restaurant_menu, color: Colors.orange, size: 28),
+                SizedBox(width: 8),
+                Text(
+                  "Konfirmasi Bayar",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildQtyRow(
+                  "Krupuk",
+                  krupukQty,
+                  (delta) => setState(
+                    () => krupukQty = (krupukQty + delta).clamp(0, 100),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildQtyRow(
+                  "Klub Gelas",
+                  klubGelasQty,
+                  (delta) => setState(
+                    () => klubGelasQty = (klubGelasQty + delta).clamp(0, 100),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).pop({"krupuk": krupukQty, "klubGelas": klubGelasQty}),
+                icon: const Icon(Icons.check, size: 18, color: Colors.white),
+                label: const Text(
+                  "Konfirmasi Bayar",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (result != null) {
+        _pendingTambahan = result;
+        return true;
+      }
+
+      return false;
     }
-    // Perbaikan: Gunakan named parameters untuk icon dan iconColor
-    return ConfirmationDialogs.showConfirm(
-      context,
-      title,
-      message,
-      icon: Icons.restaurant_menu, // Tambahkan label 'icon:'
-      iconColor: Colors.orange, // Tambahkan label 'iconColor:'
+
+    return false;
+  }
+
+  Widget _buildQtyRow(String nama, int qty, void Function(int) onChanged) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          nama,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.remove_circle_outline),
+              onPressed: () => onChanged(-1),
+            ),
+            Text("$qty", style: const TextStyle(fontSize: 16)),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: () => onChanged(1),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -229,7 +331,7 @@ class OrderCard extends StatelessWidget {
                   child: IconButton(
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                    onPressed: () => onEdit(item),
+                    onPressed: () => widget.onEdit(item),
                   ),
                 ),
             ],

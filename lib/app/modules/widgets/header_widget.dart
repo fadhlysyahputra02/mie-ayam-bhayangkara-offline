@@ -5,7 +5,7 @@ class HeaderWidget extends StatelessWidget {
   final double screenHeight;
 
   const HeaderWidget({
-    super.key,   // penting biar bisa pakai GlobalKey dari parent
+    super.key, // penting biar bisa pakai GlobalKey dari parent
     required this.screenHeight,
   });
 
@@ -22,7 +22,9 @@ class HeaderWidget extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: screenHeight * 0.25,  // ini nanti akan kita hitung real tingginya di parent
+        height:
+            screenHeight *
+            0.25, // ini nanti akan kita hitung real tingginya di parent
         child: Column(
           children: [
             Padding(
@@ -48,14 +50,29 @@ class HeaderWidget extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.center,
-              child: Text(
-                "Mie Ayam \nBhayangkara",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.jockeyOne(
-                  fontSize: screenHeight * 0.05,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: screenHeight * 0.169,
+                    child: Image.asset(
+                      'assets/image/WajahAyah.png', // ganti sesuai path image
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(width: 1), // jarak antara gambar dan teks
+                  Expanded(
+                    child: Text(
+                      "Mie Ayam \nBhayangkara",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.jockeyOne(
+                        fontSize: screenHeight * 0.05,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
