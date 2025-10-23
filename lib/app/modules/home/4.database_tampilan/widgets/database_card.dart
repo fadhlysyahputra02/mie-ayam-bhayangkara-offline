@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../data/db/database_helper.dart';
 import '../utils/time_formatter.dart';
@@ -117,17 +118,81 @@ class DatabaseCard extends StatelessWidget {
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text("Konfirmasi"),
-                      content: const Text("Hapus data ini?"),
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: const Color(0xFFFFF8F0),
+                      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                      actionsPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+
+                      // 🧩 Judul dengan ikon dan teks
+                      title: const Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red, size: 28),
+                          SizedBox(width: 8),
+                          Text(
+                            "Konfirmasi",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // 📝 Isi pesan
+                      content: Text(
+                        "Apakah Anda yakin ingin menghapus data ini?",
+                        style: GoogleFonts.jockeyOne(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          height: 1.3,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      // 🔘 Tombol aksi
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(context, false),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(false),
                           child: const Text("Batal"),
                         ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Ya"),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          icon: const Icon(
+                            Icons.delete_forever,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            "Hapus",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),

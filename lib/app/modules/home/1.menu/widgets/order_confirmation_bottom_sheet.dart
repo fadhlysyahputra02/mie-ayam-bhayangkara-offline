@@ -88,7 +88,7 @@ class _OrderConfirmationBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    final double maxHeight = MediaQuery.of(context).size.height * 0.82;
+    final double maxHeight = MediaQuery.of(context).size.height * 0.92;
     final totalSemua = hitungTotalSemua();
 
     return Padding(
@@ -170,7 +170,10 @@ class _OrderConfirmationBottomSheetState
                                 item['nama'],
                                 style: GoogleFonts.jockeyOne(fontSize: 20),
                               ),
-                              subtitle: Text("Jumlah: ${item['qty']}"),
+                              subtitle: Text(
+                                "Jumlah: ${item['qty']}",
+                                style: GoogleFonts.roboto(fontSize: 16),
+                              ),
                               trailing: Text(
                                 "Rp $perItemTotal",
                                 style: GoogleFonts.jockeyOne(
@@ -299,7 +302,7 @@ class _OrderConfirmationBottomSheetState
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color.fromARGB(63, 92, 92, 92),
-                  labelText: "Catatan ciri pembeli",
+                  labelText: "Ciri pembeli...",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,

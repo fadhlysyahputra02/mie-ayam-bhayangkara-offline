@@ -172,24 +172,37 @@ class _RiwayatViewState extends State<RiwayatView> {
                   end = start.add(const Duration(days: 1));
                 }
 
-                // Di bagian FutureBuilder
-                final pesananFiltered = snapshot.data!.where((item) {
+                final allData = snapshot.data!;
+
+                // 💰 Filter untuk total uang: hanya status "selesai_bayar"
+                final pesananBayar = allData.where((item) {
                   final createdAt = DateTime.tryParse(item['created_at'] ?? '');
                   if (createdAt == null) return false;
-
-                  // Filter status selesai_bayar
-                  if ((item['status'] ?? '') != 'selesai_bayar') return false;
-
-                  return !createdAt.isBefore(start) && createdAt.isBefore(end);
+                  return (item['status'] ?? '') == 'selesai_bayar' &&
+                      !createdAt.isBefore(start) &&
+                      createdAt.isBefore(end);
                 }).toList();
-                // Hitung total harga
-                num totalSemua = pesananFiltered.fold<num>(
+
+                num totalSemua = pesananBayar.fold<num>(
                   0,
                   (sum, item) => sum + (item['total'] ?? 0),
                 );
 
-                // Hitung total porsi mie sesuai filter
-                int totalQtyMakanan = pesananFiltered
+                // 🍜 Filter untuk total porsi mie: hanya status "selesai_masak"
+                final pesananMasak = allData.where((item) {
+                  final createdAt = DateTime.tryParse(item['created_at'] ?? '');
+                  if (createdAt == null) return false;
+
+                  final status = item['status'] ?? '';
+
+                  // ✅ Termasuk selesai_masak DAN selesai_bayar
+                  return (status == 'selesai_masak' ||
+                          status == 'selesai_bayar') &&
+                      !createdAt.isBefore(start) &&
+                      createdAt.isBefore(end);
+                }).toList();
+
+                int totalQtyMakanan = pesananMasak
                     .where((item) => item['kategori'] == 'makanan')
                     .fold<int>(0, (sum, item) => sum + (item['qty'] as int));
 
@@ -201,6 +214,7 @@ class _RiwayatViewState extends State<RiwayatView> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // 💰 Total uang hari ini
                       Text(
                         "Total hari ini: Rp ${NumberFormat('#,###').format(totalSemua)}",
                         style: GoogleFonts.jockeyOne(
@@ -208,6 +222,8 @@ class _RiwayatViewState extends State<RiwayatView> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
+                      // 🍜 Total porsi mie
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,

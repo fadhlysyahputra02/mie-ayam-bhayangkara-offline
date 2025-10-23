@@ -187,17 +187,15 @@ class DatabaseHelper {
 
   Future<void> deleteOldPesanan() async {
     final db = await database;
-
     // Ambil waktu saat ini
     final now = DateTime.now();
-
     // Tentukan batas 7 hari yang lalu dari jam 22:00
     final sevenDaysAgoAt22 = DateTime(
       now.year,
       now.month,
       now.day,
       22, // jam 22:00 hari ini
-    ).subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+    ).subtract(const Duration(days: 6)).millisecondsSinceEpoch;
 
     await db.delete(
       'pesanan',

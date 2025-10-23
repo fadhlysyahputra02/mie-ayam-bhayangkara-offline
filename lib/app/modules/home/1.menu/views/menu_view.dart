@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../data/db/database_helper.dart';
 import '../../../../data/menu_data.dart';
 import '../../../widgets/header_widget.dart';
-import 'package:get/get.dart';
-
 import '../widgets/buat_pesanan_button.dart';
 import '../widgets/menu_card.dart';
 import '../widgets/order_confirmation_bottom_sheet.dart';

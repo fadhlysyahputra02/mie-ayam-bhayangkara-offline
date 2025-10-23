@@ -189,16 +189,24 @@ class _OrderCardState extends State<OrderCard> {
               borderRadius: BorderRadius.circular(16),
             ),
             backgroundColor: const Color(0xFFFFF8F0),
-            title: Row(
-              children: const [
+
+            // 🧩 Judul
+            title: const Row(
+              children: [
                 Icon(Icons.restaurant_menu, color: Colors.orange, size: 28),
                 SizedBox(width: 8),
                 Text(
                   "Konfirmasi Bayar",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.black87,
+                  ),
                 ),
               ],
             ),
+
+            // 📝 Isi konten (jumlah krupuk & klub gelas)
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -219,12 +227,33 @@ class _OrderCardState extends State<OrderCard> {
                 ),
               ],
             ),
+
+            // 🔘 Tombol aksi
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             actions: [
+              // Tombol Batal
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey[700],
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Navigator.of(context).pop(null),
+                child: const Text("Batal"),
+              ),
+
+              // Tombol Konfirmasi Bayar
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
                 ),
                 onPressed: () => Navigator.of(
@@ -233,7 +262,10 @@ class _OrderCardState extends State<OrderCard> {
                 icon: const Icon(Icons.check, size: 18, color: Colors.white),
                 label: const Text(
                   "Konfirmasi Bayar",
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -245,10 +277,8 @@ class _OrderCardState extends State<OrderCard> {
         _pendingTambahan = result;
         return true;
       }
-
       return false;
     }
-
     return false;
   }
 
