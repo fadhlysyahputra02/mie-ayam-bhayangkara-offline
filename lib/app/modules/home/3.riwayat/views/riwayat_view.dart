@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-
 import '../../../../data/db/database_helper.dart';
 import '../../../widgets/header_widget.dart';
 import '../widgets/pesanan_card.dart';
@@ -89,7 +88,7 @@ class _RiwayatViewState extends State<RiwayatView> {
     final screenHeight = MediaQuery.of(context).size.height;
     final anchorDate = _getAnchorDate(DateTime.now());
     final List<DateTime> dateButtons = List.generate(
-      6,
+      8,
       (index) => anchorDate.subtract(Duration(days: index)),
     );
 
@@ -101,7 +100,7 @@ class _RiwayatViewState extends State<RiwayatView> {
 
           /// Tombol filter tanggal
           SizedBox(
-            height: 40,
+            height: 50,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -109,11 +108,21 @@ class _RiwayatViewState extends State<RiwayatView> {
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final date = dateButtons[index];
-                String label = (index == 0)
-                    ? "Sekarang"
-                    : (index == 1)
-                    ? "Kemarin"
-                    : DateFormat('dd/MM').format(date);
+
+                String dayName;
+                String dayMonth;
+
+                if (index == 0) {
+                  dayName = "Hari ini";
+                  dayMonth = DateFormat('dd/MM').format(date);
+                } else if (index == 1) {
+                  dayName = "Kemarin";
+                  dayMonth = DateFormat('dd/MM').format(date);
+                } else {
+                  dayName = DateFormat.EEEE('ID').format(date); // Sen, Sel, Rab
+                  dayMonth = DateFormat('dd/MM').format(date); // 19/11
+                }
+
                 final isSelected =
                     DateFormat('yyyy-MM-dd').format(date) ==
                     DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -129,15 +138,29 @@ class _RiwayatViewState extends State<RiwayatView> {
                   onPressed: () {
                     setState(() => _selectedDate = date);
                   },
-                  child: Text(
-                    label,
-                    style: GoogleFonts.jockeyOne(fontSize: 14),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayName,
+                        style: GoogleFonts.jockeyOne(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        dayMonth,
+                        style: GoogleFonts.jockeyOne(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
             ),
           ),
-
           const SizedBox(height: 10),
 
           /// Total pesanan

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../data/menu_data.dart';
 import 'add_order_bottom_sheet.dart';
 import 'confirmation_dialogs.dart';
+import 'order_helpers.dart';
 
 class OrderCard extends StatefulWidget {
   final List<Map<String, dynamic>> items;
@@ -18,7 +18,7 @@ class OrderCard extends StatefulWidget {
     required int harga,
     required String kategori,
   })
-  onTambahMenu; // ⬅️ baru
+  onTambahMenu;
 
   const OrderCard({
     super.key,
@@ -42,7 +42,20 @@ class _OrderCardState extends State<OrderCard> {
   Widget build(BuildContext context) {
     final waktu = widget.items.first['timestamp'];
     final ciriPembeli = widget.items.first['ciri_pembeli'] ?? '-';
-    final isSelesaiMasak = widget.items.first['status'] == 'selesai_masak';
+    final firstItem = widget.items.first;
+    final createdAt = DateTime.parse(firstItem['created_at']);
+    final timestampSelesaiMasak = firstItem['timestamp'];
+    final isSelesaiMasak = firstItem['status'] == 'selesai_masak';
+    // Hitung durasi dalam menit
+    String durasiText = "";
+    if (isSelesaiMasak) {
+      final selesaiTime = DateTime.fromMillisecondsSinceEpoch(
+        timestampSelesaiMasak,
+      );
+      final duration = selesaiTime.difference(createdAt);
+      final menit = duration.inMinutes;
+      durasiText = "Durasi dibuat selama $menit menit";
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -146,19 +159,46 @@ class _OrderCardState extends State<OrderCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            isSelesaiMasak
-                                ? "SUDAH DIANTAR"
-                                : "Waktu Pesanan: ${DateFormat('HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
-                            style: GoogleFonts.jockeyOne(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: isSelesaiMasak
-                                  ? Colors.black
-                                  : Colors.deepOrange,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                          isSelesaiMasak
+                              ? Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: "Sudah Diantar\n",
+                                        style: GoogleFonts.jockeyOne(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors
+                                              .black, // warna Selesai Masak
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: "($durasiText)",
+                                        style: GoogleFonts.jockeyOne(
+                                          fontSize: 20, // ukuran font durasi
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromARGB(
+                                            255,
+                                            73,
+                                            73,
+                                            73,
+                                          ), // warna durasi
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                )
+                              : Text(
+                                  "Pesanan Pukul: ${DateFormat('HH:mm').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
+                                  style: GoogleFonts.jockeyOne(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepOrange,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                          const SizedBox(height: 2),
                           Text(
                             "Pesanan ID: ${widget.noId}",
                             style: GoogleFonts.jockeyOne(
@@ -183,7 +223,16 @@ class _OrderCardState extends State<OrderCard> {
                 ),
                 const Divider(height: 16, thickness: 1),
                 // Menu items
-                ...widget.items.map((item) => _buildMenuItem(item)).toList(),
+                ...widget.items
+                    .map(
+                      (item) => buildMenuItem(
+                        item: item,
+                        onEdit: widget.onEdit,
+                        onHapusItem: widget.onHapusItem,
+                        context: context,
+                      ),
+                    )
+                    .toList(),
                 const Divider(height: 16, thickness: 1),
                 const SizedBox(height: 8),
                 // Total
@@ -281,7 +330,7 @@ class _OrderCardState extends State<OrderCard> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildQtyRow(
+                buildQtyRow(
                   "Krupuk",
                   krupukQty,
                   (delta) => setState(
@@ -289,7 +338,7 @@ class _OrderCardState extends State<OrderCard> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildQtyRow(
+                buildQtyRow(
                   "Klub Gelas",
                   klubGelasQty,
                   (delta) => setState(
@@ -351,146 +400,5 @@ class _OrderCardState extends State<OrderCard> {
       return false;
     }
     return false;
-  }
-
-  Widget _buildQtyRow(String nama, int qty, void Function(int) onChanged) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          nama,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: () => onChanged(-1),
-            ),
-            Text("$qty", style: const TextStyle(fontSize: 16)),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () => onChanged(1),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuItem(Map<String, dynamic> item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 4,
-                child: Text(
-                  "${item['nama']}",
-                  style: GoogleFonts.jockeyOne(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  "x${item['qty']}",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.jockeyOne(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(height: 24, width: 1, color: Colors.grey[400]),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  "Rp ${item['total']}",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.jockeyOne(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(height: 24, width: 1, color: Colors.grey[400]),
-              if (item['status'] != 'selesai_masak')
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Tombol edit
-                    Container(
-                      height: 32,
-                      width: 32,
-                      margin: const EdgeInsets.only(left: 6),
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 59, 190, 63),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        onPressed: () => widget.onEdit(item),
-                      ),
-                    ),
-                    // Tombol hapus
-                    Container(
-                      height: 32,
-                      width: 32,
-                      margin: const EdgeInsets.only(left: 6),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.remove,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        onPressed: () async {
-                          final confirm = await ConfirmationDialogs.showConfirm(
-                            context,
-                            "Hapus Menu",
-                            "Yakin ingin menghapus menu ini dari pesanan?",
-                            icon: Icons.delete,
-                            iconColor: Colors.red,
-                          );
-                          if (confirm == true) {
-                            widget.onHapusItem(item);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          if ((item['note'] ?? '').isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                "Catatan: ${item['note']}",
-                style: GoogleFonts.jockeyOne(
-                  fontSize: 19,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }

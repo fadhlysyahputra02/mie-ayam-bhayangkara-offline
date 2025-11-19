@@ -40,17 +40,18 @@ class DatabaseHelper {
   created_at TEXT,
   no_id INTEGER,
   timestamp INTEGER,
-  status TEXT
+  status TEXT,
+  selesai_masak_duration INTEGER DEFAULT 0
 )
     ''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       await db.execute('ALTER TABLE pesanan ADD COLUMN order_id TEXT');
-      await db.execute('ALTER TABLE pesanan ADD COLUMN no_id INTEGER');
-      await db.execute('ALTER TABLE pesanan ADD COLUMN timestamp INTEGER');
-      await db.execute('ALTER TABLE pesanan ADD COLUMN status TEXT');
+      await db.execute(
+        'ALTER TABLE pesanan ADD COLUMN selesai_masak_duration INTEGER DEFAULT 0',
+      );
     }
   }
 
@@ -93,11 +94,38 @@ class DatabaseHelper {
 
   Future<int> SelesaiMasak(int noId, bool isDone) async {
     final db = await database;
-    return await PesananHelper.updatePesananStatus(
-      db,
-      noId,
-      isDone ? 'selesai_masak' : '',
-    );
+    if (isDone) {
+      final item = await db.query(
+        'pesanan',
+        where: 'no_id = ?',
+        whereArgs: [noId],
+      );
+      if (item.isNotEmpty) {
+        final createdAt = DateTime.parse(item.first['created_at'].toString());
+
+        final now = DateTime.now();
+        final durationMinutes = now.difference(createdAt).inMinutes;
+
+        return await db.update(
+          'pesanan',
+          {
+            'status': 'selesai_masak',
+            'selesai_masak_duration': durationMinutes,
+            'timestamp': now.millisecondsSinceEpoch,
+          },
+          where: 'no_id = ?',
+          whereArgs: [noId],
+        );
+      }
+    } else {
+      return await db.update(
+        'pesanan',
+        {'status': ''},
+        where: 'no_id = ?',
+        whereArgs: [noId],
+      );
+    }
+    return 0;
   }
 
   Future<int> SelesaiBayar(int noId, bool isDone) async {
@@ -196,7 +224,7 @@ class DatabaseHelper {
       now.month,
       now.day,
       22, // jam 22:00 hari ini
-    ).subtract(const Duration(days: 6)).millisecondsSinceEpoch;
+    ).subtract(const Duration(days: 9)).millisecondsSinceEpoch;
 
     await db.delete(
       'pesanan',

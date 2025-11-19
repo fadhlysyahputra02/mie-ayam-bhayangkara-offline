@@ -19,11 +19,17 @@ class AntreanPage extends StatefulWidget {
 class _AntreanPageState extends State<AntreanPage> {
   final antreanController = Get.put(AntreanController());
   Future<List<Map<String, dynamic>>>? _pesananFuture;
+  double _headerHeight = 0;
+
+  final GlobalKey _headerKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _loadPesanan();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _calculateHeaderHeight(),
+    );
   }
 
   Future<void> _loadPesanan() {
@@ -33,28 +39,27 @@ class _AntreanPageState extends State<AntreanPage> {
     return _pesananFuture!;
   }
 
+  void _calculateHeaderHeight() {
+    final contextHeader = _headerKey.currentContext;
+    if (contextHeader != null) {
+      final box = contextHeader.findRenderObject() as RenderBox;
+      final newHeight = box.size.height;
+      if (_headerHeight != newHeight) {
+        setState(() {
+          _headerHeight = newHeight;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final GlobalKey _headerKey = GlobalKey();
-    double _headerHeight = 0;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _headerKey.currentContext;
-      if (context != null) {
-        final box = context.findRenderObject() as RenderBox;
-        final newHeight = box.size.height;
-        if (_headerHeight != newHeight) {
-          setState(() {
-            _headerHeight = newHeight;
-          });
-        }
-      }
-    });
+
     return Scaffold(
       body: Column(
         children: [
           HeaderWidget(key: _headerKey, screenHeight: screenHeight),
-
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _pesananFuture,
@@ -101,26 +106,22 @@ class _AntreanPageState extends State<AntreanPage> {
                   );
                 }
 
+                // Urutkan berdasarkan timestamp ascending
                 pesananList.sort((a, b) {
                   final timeA = a['timestamp'] ?? 0;
                   final timeB = b['timestamp'] ?? 0;
                   return timeA.compareTo(timeB);
                 });
 
+                // Group by no_id
                 Map<int, List<Map<String, dynamic>>> groupedPesanan = {};
                 for (var item in pesananList) {
                   final rawNoId = item['no_id'];
-
-                  // Skip item yang no_id-nya null / invalid (data lama)
                   if (rawNoId == null) continue;
 
-                  // Pastikan int
-                  final int key;
-                  if (rawNoId is int) {
-                    key = rawNoId;
-                  } else {
-                    key = int.tryParse(rawNoId.toString()) ?? 0;
-                  }
+                  final int key = rawNoId is int
+                      ? rawNoId
+                      : int.tryParse(rawNoId.toString()) ?? 0;
 
                   groupedPesanan.putIfAbsent(key, () => []).add(item);
                 }
@@ -129,14 +130,17 @@ class _AntreanPageState extends State<AntreanPage> {
                   children: [
                     RefreshIndicator(
                       onRefresh: _loadPesanan,
-                      child: ListView(
+                      child: ListView.builder(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
-                        children: groupedPesanan.entries.map((entry) {
+                        itemCount: groupedPesanan.entries.length,
+                        itemBuilder: (context, index) {
+                          final entry = groupedPesanan.entries.elementAt(index);
                           final noId = entry.key;
                           final items = entry.value;
+
                           return OrderCard(
                             key: ValueKey(noId),
                             items: items,
@@ -169,14 +173,13 @@ class _AntreanPageState extends State<AntreanPage> {
                               );
                             },
                           );
-                        }).toList(),
+                        },
                       ),
                     ),
+                    // FAB tetap bisa digeser
                     DraggableFab(
                       icon: Icons.delete,
-                      minTop:
-                          _headerHeight +
-                          10, // supaya FAB mulai di bawah header
+                      minTop: _headerHeight + 10,
                       maxTop: MediaQuery.of(context).size.height - 120,
                       onPressed: () => _deleteAllAntrean(context),
                     ),
@@ -285,7 +288,7 @@ class _AntreanPageState extends State<AntreanPage> {
     final total = harga * qty;
 
     await DatabaseHelper.instance.insertPesananDenganNoId(
-      noId: noId, // ⬅️ pakai no_id lama
+      noId: noId,
       nama: nama,
       qty: qty,
       total: total,
