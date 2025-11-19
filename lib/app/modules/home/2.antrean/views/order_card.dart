@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../../data/menu_data.dart';
+import 'add_order_bottom_sheet.dart';
 import 'confirmation_dialogs.dart';
 
 class OrderCard extends StatefulWidget {
@@ -8,7 +10,15 @@ class OrderCard extends StatefulWidget {
   final int noId;
   final Function(Map<String, dynamic>) onEdit;
   final VoidCallback onSelesaiMasak;
+  final void Function(Map<String, dynamic> item) onHapusItem;
   final void Function(Map<String, int>) onSelesaiBayar;
+  final void Function({
+    required String nama,
+    required int qty,
+    required int harga,
+    required String kategori,
+  })
+  onTambahMenu; // ⬅️ baru
 
   const OrderCard({
     super.key,
@@ -17,6 +27,8 @@ class OrderCard extends StatefulWidget {
     required this.onEdit,
     required this.onSelesaiMasak,
     required this.onSelesaiBayar,
+    required this.onTambahMenu,
+    required this.onHapusItem,
   });
 
   @override
@@ -72,33 +84,91 @@ class _OrderCardState extends State<OrderCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Waktu & ID
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                // Waktu, ID & tombol tambah menu di pojok kiri atas
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Text(
-                        isSelesaiMasak
-                            ? "SUDAH DIANTAR"
-                            : "Waktu Pesanan: ${DateFormat('HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
-                        style: GoogleFonts.jockeyOne(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isSelesaiMasak
-                              ? Colors.black
-                              : Colors.deepOrange,
+                    // Tombol tambah menu kiri atas
+                    GestureDetector(
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => AddMenuBottomSheet(
+                          onTambahMenu:
+                              ({
+                                required nama,
+                                required qty,
+                                required harga,
+                                required kategori,
+                              }) {
+                                // Panggil fungsi di parent untuk menambahkan menu
+                                widget.onTambahMenu(
+                                  nama: nama,
+                                  qty: qty,
+                                  harga: harga,
+                                  kategori: kategori,
+                                );
+                              },
+                        ),
+                      ),
+
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue, // background biru
+                          borderRadius: BorderRadius.circular(
+                            12,
+                          ), // sudut melengkung
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.add, color: Colors.white, size: 20),
+                          ],
                         ),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        "Pesanan ID: ${widget.noId}",
-                        style: GoogleFonts.jockeyOne(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+
+                    // Info waktu & ID
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            isSelesaiMasak
+                                ? "SUDAH DIANTAR"
+                                : "Waktu Pesanan: ${DateFormat('HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
+                            style: GoogleFonts.jockeyOne(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isSelesaiMasak
+                                  ? Colors.black
+                                  : Colors.deepOrange,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            "Pesanan ID: ${widget.noId}",
+                            style: GoogleFonts.jockeyOne(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -115,6 +185,7 @@ class _OrderCardState extends State<OrderCard> {
                 // Menu items
                 ...widget.items.map((item) => _buildMenuItem(item)).toList(),
                 const Divider(height: 16, thickness: 1),
+                const SizedBox(height: 8),
                 // Total
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -350,19 +421,59 @@ class _OrderCardState extends State<OrderCard> {
               ),
               Container(height: 24, width: 1, color: Colors.grey[400]),
               if (item['status'] != 'selesai_masak')
-                Container(
-                  height: 32,
-                  width: 32,
-                  margin: const EdgeInsets.only(left: 6),
-                  decoration: const BoxDecoration(
-                    color: Color.fromARGB(255, 59, 190, 63),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                    onPressed: () => widget.onEdit(item),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Tombol edit
+                    Container(
+                      height: 32,
+                      width: 32,
+                      margin: const EdgeInsets.only(left: 6),
+                      decoration: const BoxDecoration(
+                        color: Color.fromARGB(255, 59, 190, 63),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        onPressed: () => widget.onEdit(item),
+                      ),
+                    ),
+                    // Tombol hapus
+                    Container(
+                      height: 32,
+                      width: 32,
+                      margin: const EdgeInsets.only(left: 6),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.remove,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        onPressed: () async {
+                          final confirm = await ConfirmationDialogs.showConfirm(
+                            context,
+                            "Hapus Menu",
+                            "Yakin ingin menghapus menu ini dari pesanan?",
+                            icon: Icons.delete,
+                            iconColor: Colors.red,
+                          );
+                          if (confirm == true) {
+                            widget.onHapusItem(item);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),

@@ -109,7 +109,19 @@ class _AntreanPageState extends State<AntreanPage> {
 
                 Map<int, List<Map<String, dynamic>>> groupedPesanan = {};
                 for (var item in pesananList) {
-                  int key = item['no_id'];
+                  final rawNoId = item['no_id'];
+
+                  // Skip item yang no_id-nya null / invalid (data lama)
+                  if (rawNoId == null) continue;
+
+                  // Pastikan int
+                  final int key;
+                  if (rawNoId is int) {
+                    key = rawNoId;
+                  } else {
+                    key = int.tryParse(rawNoId.toString()) ?? 0;
+                  }
+
                   groupedPesanan.putIfAbsent(key, () => []).add(item);
                 }
 
@@ -133,6 +145,29 @@ class _AntreanPageState extends State<AntreanPage> {
                             onSelesaiMasak: () => _handleSelesaiMasak(noId),
                             onSelesaiBayar: (tambahan) =>
                                 _handleSelesaiBayar(tambahan, noId),
+                            onTambahMenu:
+                                ({
+                                  required String nama,
+                                  required int qty,
+                                  required int harga,
+                                  required String kategori,
+                                }) => _handleTambahMenu(
+                                  noId: noId,
+                                  nama: nama,
+                                  qty: qty,
+                                  harga: harga,
+                                  kategori: kategori,
+                                ),
+                            onHapusItem: (item) async {
+                              await DatabaseHelper.instance.deletePesananItem(
+                                item['id'],
+                              );
+                              await _loadPesanan();
+                              ConfirmationDialogs.showSuccess(
+                                context,
+                                "Item berhasil dihapus",
+                              );
+                            },
                           );
                         }).toList(),
                       ),
@@ -225,5 +260,41 @@ class _AntreanPageState extends State<AntreanPage> {
       await DatabaseHelper.instance.SelesaiBayarSemua();
       await _loadPesanan();
     }
+  }
+
+  Future<void> _handleTambahMenu({
+    required int noId,
+    required String nama,
+    required int qty,
+    required int harga,
+    required String kategori,
+  }) async {
+    final snapshot = await _pesananFuture;
+    String ciriPembeli = "-";
+
+    if (snapshot != null) {
+      final item = snapshot.firstWhere(
+        (e) => e["no_id"] == noId,
+        orElse: () => {},
+      );
+      if (item.isNotEmpty && item["ciri_pembeli"] != null) {
+        ciriPembeli = item["ciri_pembeli"] as String;
+      }
+    }
+
+    final total = harga * qty;
+
+    await DatabaseHelper.instance.insertPesananDenganNoId(
+      noId: noId, // ⬅️ pakai no_id lama
+      nama: nama,
+      qty: qty,
+      total: total,
+      note: "",
+      kategori: kategori,
+      ciriPembeli: ciriPembeli,
+      status: "true",
+    );
+
+    await _loadPesanan();
   }
 }

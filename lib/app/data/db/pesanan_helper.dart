@@ -31,7 +31,7 @@ class PesananHelper {
   }
 
   static Future<List<Map<String, dynamic>>> getPesananList(Database db) async {
-    return await db.rawQuery('SELECT rowid AS id, * FROM pesanan');
+    return await db.query('pesanan'); // id sudah ada otomatis
   }
 
   static Future<int> updatePesananStatus(
@@ -61,5 +61,32 @@ class PesananHelper {
       where: 'no_id = ?',
       whereArgs: [noId],
     );
+  }
+
+  static Map<String, dynamic> createPesananDataWithNoId({
+    required int noId,
+    required String nama,
+    required int qty,
+    required int total,
+    required String note,
+    required String ciriPembeli,
+    required String kategori,
+    String status = "true",
+  }) {
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch;
+
+    return {
+      'no_id': noId,
+      'nama': nama,
+      'qty': qty,
+      'total': total,
+      'note': note,
+      'ciri_pembeli': ciriPembeli,
+      'kategori': kategori,
+      'created_at': now.toIso8601String(),
+      'timestamp': timestamp,
+      'status': status,
+    };
   }
 }

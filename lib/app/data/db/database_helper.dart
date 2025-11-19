@@ -30,17 +30,18 @@ class DatabaseHelper {
   Future _createDB(Database db, int version) async {
     await db.execute('''
     CREATE TABLE pesanan (
-      nama TEXT,
-      qty INTEGER,
-      total INTEGER,
-      note TEXT,
-      ciri_pembeli TEXT,
-      kategori TEXT,
-      created_at TEXT,
-      no_id INTEGER,
-      timestamp INTEGER,
-      status TEXT
-    )
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nama TEXT,
+  qty INTEGER,
+  total INTEGER,
+  note TEXT,
+  ciri_pembeli TEXT,
+  kategori TEXT,
+  created_at TEXT,
+  no_id INTEGER,
+  timestamp INTEGER,
+  status TEXT
+)
     ''');
   }
 
@@ -202,5 +203,68 @@ class DatabaseHelper {
       where: 'timestamp < ?',
       whereArgs: [sevenDaysAgoAt22],
     );
+  }
+
+  Future<int> insertPesananDenganNoId({
+    required int noId,
+    required String nama,
+    required int qty,
+    required int total,
+    String note = "",
+    required String kategori,
+    required String ciriPembeli,
+    String status = "true",
+  }) async {
+    final db = await database;
+    final data = PesananHelper.createPesananDataWithNoId(
+      noId: noId,
+      nama: nama,
+      qty: qty,
+      total: total,
+      note: note,
+      ciriPembeli: ciriPembeli,
+      kategori: kategori,
+      status: status,
+    );
+    return await db.insert('pesanan', data);
+  }
+
+  Future<void> deletePesananItem(int id) async {
+    final db = await database;
+
+    final item = await db.query('pesanan', where: 'id = ?', whereArgs: [id]);
+    if (item.isEmpty) return;
+
+    final noId = item.first['no_id'] as int;
+
+    // Hapus item
+    await db.delete('pesanan', where: 'id = ?', whereArgs: [id]);
+
+    // Update total pesanan utama
+    final remainingItems = await db.query(
+      'pesanan',
+      where: 'no_id = ?',
+      whereArgs: [noId],
+    );
+
+    final newTotal = remainingItems.fold<int>(
+      0,
+      (sum, e) => sum + (e['total'] as int),
+    );
+
+    if (remainingItems.isNotEmpty) {
+      final primaryItemId = remainingItems.first['id'] as int;
+      await db.update(
+        'pesanan',
+        {'total': newTotal},
+        where: 'id = ?',
+        whereArgs: [primaryItemId],
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPesananItemsByNoId(int noId) async {
+    final db = await database;
+    return await db.query('pesanan', where: 'no_id = ?', whereArgs: [noId]);
   }
 }

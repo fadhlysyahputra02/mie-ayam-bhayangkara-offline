@@ -243,16 +243,39 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
                       (widget.item['qty'] ?? 0);
                   final newNote = noteController.text.trim();
                   final oldQty = widget.item['qty'] ?? 0;
-                  final oldTotal = widget.item['total'] ?? 0;
 
-                  int? newTotal;
-                  if (newQty != oldQty && oldQty != 0) {
-                    final unitPrice = oldTotal ~/ oldQty;
-                    newTotal = unitPrice * newQty;
-                  } else {
-                    newTotal = oldTotal;
+                  // =============================
+                  // 1. Ambil harga berdasar menu baru
+                  // =============================
+                  int newUnitPrice =
+                      widget.item['total'] ~/ (widget.item['qty'] ?? 1);
+
+                  // CARI dari menu makanan
+                  final makanan = menuMakanan.firstWhere(
+                    (m) => m['nama'] == selectedMenu,
+                    orElse: () => {},
+                  );
+
+                  // CARI dari menu minuman
+                  final minuman = menuMinuman.firstWhere(
+                    (m) => m['nama'] == selectedMenu,
+                    orElse: () => {},
+                  );
+
+                  if (makanan.isNotEmpty) {
+                    newUnitPrice = makanan['harga'] as int;
+                  } else if (minuman.isNotEmpty) {
+                    newUnitPrice = minuman['harga'] as int;
                   }
 
+                  // =============================
+                  // 2. Hitung total baru
+                  // =============================
+                  final newTotal = newUnitPrice * newQty;
+
+                  // =============================
+                  // 3. Update item
+                  // =============================
                   final updatedItem = Map<String, dynamic>.from(widget.item)
                     ..['qty'] = newQty
                     ..['note'] = newNote
@@ -264,6 +287,7 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
                   widget.onSave(updatedItem);
                   Navigator.of(context).pop();
                 },
+
                 child: const Text(
                   "Simpan",
                   style: TextStyle(color: Colors.white),

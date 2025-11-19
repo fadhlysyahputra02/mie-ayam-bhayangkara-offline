@@ -40,7 +40,9 @@ class ConfirmationDialogs {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.check, size: 18, color: Colors.white),
@@ -83,10 +85,16 @@ class ConfirmationDialogs {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            icon: const Icon(Icons.delete_forever, size: 18, color: Colors.white),
+            icon: const Icon(
+              Icons.delete_forever,
+              size: 18,
+              color: Colors.white,
+            ),
             label: const Text("Hapus", style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -109,7 +117,9 @@ class ConfirmationDialogs {
           Navigator.of(context).pop();
         });
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -119,7 +129,10 @@ class ConfirmationDialogs {
                 const SizedBox(width: 12),
                 Text(
                   message,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -143,7 +156,10 @@ class ConfirmationDialogs {
             const SizedBox(width: 12),
             Text(
               message,
-              style: GoogleFonts.jockeyOne(fontSize: 16, fontWeight: FontWeight.bold),
+              style: GoogleFonts.jockeyOne(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
