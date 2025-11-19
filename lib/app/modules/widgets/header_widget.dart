@@ -24,7 +24,7 @@ class HeaderWidget extends StatelessWidget {
       child: SizedBox(
         height:
             screenHeight *
-            0.25, // ini nanti akan kita hitung real tingginya di parent
+            0.255, // ini nanti akan kita hitung real tingginya di parent
         child: Column(
           children: [
             Padding(

@@ -43,7 +43,10 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color.fromARGB(255, 255, 235, 213), Color.fromARGB(255, 190, 190, 190)],
+          colors: [
+            Color.fromARGB(255, 255, 235, 213),
+            Color.fromARGB(255, 190, 190, 190),
+          ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -91,12 +94,20 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
             keyboardType: TextInputType.number,
             style: const TextStyle(fontSize: 16),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.format_list_numbered, color: Colors.blue),
+              prefixIcon: const Icon(
+                Icons.format_list_numbered,
+                color: Colors.blue,
+              ),
               labelText: "Jumlah Pesanan",
-              labelStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+              labelStyle: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
               hintText: "Masukkan jumlah",
               hintStyle: TextStyle(color: Colors.grey[400]),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(color: Colors.blue.withOpacity(0.3)),
@@ -107,7 +118,10 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
               ),
               filled: true,
               fillColor: Colors.grey[100],
-              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 16,
+              ),
             ),
             onChanged: (value) {
               setState(() {
@@ -122,12 +136,20 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
             controller: noteController,
             style: const TextStyle(fontSize: 16),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.note_alt_outlined, color: Colors.orange),
+              prefixIcon: const Icon(
+                Icons.note_alt_outlined,
+                color: Colors.orange,
+              ),
               labelText: "Catatan",
-              labelStyle: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w600),
+              labelStyle: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
               hintText: "Tambahkan catatan pesanan...",
               hintStyle: TextStyle(color: Colors.grey[400]),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(color: Colors.orange.withOpacity(0.3)),
@@ -138,7 +160,10 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
               ),
               filled: true,
               fillColor: Colors.grey[100],
-              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 16,
+              ),
             ),
             onChanged: (value) {
               setState(() {
@@ -162,14 +187,18 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
               });
             },
             items: [
-              ...menuMakanan.map((item) => DropdownMenuItem<String>(
-                    value: item['nama'] as String,
-                    child: Text(item['nama'] as String),
-                  )),
-              ...menuMinuman.map((item) => DropdownMenuItem<String>(
-                    value: item['nama'] as String,
-                    child: Text(item['nama'] as String),
-                  )),
+              ...menuMakanan.map(
+                (item) => DropdownMenuItem<String>(
+                  value: item['nama'] as String,
+                  child: Text(item['nama'] as String),
+                ),
+              ),
+              ...menuMinuman.map(
+                (item) => DropdownMenuItem<String>(
+                  value: item['nama'] as String,
+                  child: Text(item['nama'] as String),
+                ),
+              ),
             ],
             isExpanded: true,
             hint: const Text("Pilih Menu Makanan atau Minuman"),
@@ -186,8 +215,13 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
             children: [
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text("Batal"),
@@ -195,11 +229,18 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
                 onPressed: () {
-                  final newQty = int.tryParse(qtyController.text) ?? (widget.item['qty'] ?? 0);
+                  final newQty =
+                      int.tryParse(qtyController.text) ??
+                      (widget.item['qty'] ?? 0);
                   final newNote = noteController.text.trim();
                   final oldQty = widget.item['qty'] ?? 0;
                   final oldTotal = widget.item['total'] ?? 0;
@@ -215,13 +256,18 @@ class _EditOrderBottomSheetState extends State<EditOrderBottomSheet> {
                   final updatedItem = Map<String, dynamic>.from(widget.item)
                     ..['qty'] = newQty
                     ..['note'] = newNote
-                    ..['nama'] = selectedMenu.isNotEmpty ? selectedMenu : widget.item['nama']
+                    ..['nama'] = selectedMenu.isNotEmpty
+                        ? selectedMenu
+                        : widget.item['nama']
                     ..['total'] = newTotal;
 
                   widget.onSave(updatedItem);
                   Navigator.of(context).pop();
                 },
-                child: const Text("Simpan", style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  "Simpan",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
