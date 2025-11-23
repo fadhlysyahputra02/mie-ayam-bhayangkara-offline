@@ -190,7 +190,7 @@ class _OrderCardState extends State<OrderCard> {
                                   textAlign: TextAlign.center,
                                 )
                               : Text(
-                                  "Pesanan Pukul: ${DateFormat('HH:mm').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
+                                  "Pesanan Pukul: ${DateFormat('HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(waktu, isUtc: false))}",
                                   style: GoogleFonts.jockeyOne(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,

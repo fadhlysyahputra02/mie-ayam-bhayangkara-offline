@@ -112,8 +112,7 @@ class _AntreanPageState extends State<AntreanPage> {
                   final timeB = b['timestamp'] ?? 0;
                   return timeA.compareTo(timeB);
                 });
-
-                // Group by no_id
+                // Group by no_id (tetap)
                 Map<int, List<Map<String, dynamic>>> groupedPesanan = {};
                 for (var item in pesananList) {
                   final rawNoId = item['no_id'];
@@ -126,6 +125,33 @@ class _AntreanPageState extends State<AntreanPage> {
                   groupedPesanan.putIfAbsent(key, () => []).add(item);
                 }
 
+                // Ubah Map entries jadi List supaya bisa di-sort deterministik
+                final entries = groupedPesanan.entries.toList();
+
+                // Hitung 'waktu dibuat' untuk tiap grup: ambil timestamp terkecil di grup.
+                // Gunakan ini untuk sorting agar urutan grup stabil walau ada item baru yang lebih baru.
+                entries.sort((a, b) {
+                  int minA = a.value
+                      .map<int>((e) {
+                        final created = e['created_at']?.toString();
+                        final dt = DateTime.tryParse(created ?? '');
+                        return dt?.millisecondsSinceEpoch ?? 0;
+                      })
+                      .fold<int>(1 << 62, (prev, t) => t < prev ? t : prev);
+
+                  int minB = b.value
+                      .map<int>((e) {
+                        final created = e['created_at']?.toString();
+                        final dt = DateTime.tryParse(created ?? '');
+                        return dt?.millisecondsSinceEpoch ?? 0;
+                      })
+                      .fold<int>(1 << 62, (prev, t) => t < prev ? t : prev);
+
+                  if (minA == (1 << 62)) minA = 0;
+                  if (minB == (1 << 62)) minB = 0;
+
+                  return minA.compareTo(minB);
+                });
                 return Stack(
                   children: [
                     RefreshIndicator(
@@ -135,12 +161,11 @@ class _AntreanPageState extends State<AntreanPage> {
                           horizontal: 12,
                           vertical: 8,
                         ),
-                        itemCount: groupedPesanan.entries.length,
+                        itemCount: entries.length,
                         itemBuilder: (context, index) {
-                          final entry = groupedPesanan.entries.elementAt(index);
+                          final entry = entries[index];
                           final noId = entry.key;
                           final items = entry.value;
-
                           return OrderCard(
                             key: ValueKey(noId),
                             items: items,
@@ -176,7 +201,6 @@ class _AntreanPageState extends State<AntreanPage> {
                         },
                       ),
                     ),
-                    // FAB tetap bisa digeser
                     DraggableFab(
                       icon: Icons.delete,
                       minTop: _headerHeight + 10,
