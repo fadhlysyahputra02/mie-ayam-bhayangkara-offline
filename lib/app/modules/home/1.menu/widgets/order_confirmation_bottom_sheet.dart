@@ -74,8 +74,71 @@ class _OrderConfirmationBottomSheetState
           }
         }
       }
+    } else {
+      // Jika minuman teh, terapkan diskon pada subtotal teh per item.
+      final nama = (widget.pesanan[index]['nama'] as String).toLowerCase();
+      if (nama.contains('teh')) {
+        subtotal -= _tehDiscountForItem(index);
+      }
     }
+
     return subtotal;
+  }
+
+  int _comboMieQty() {
+    int qty = 0;
+    for (final item in widget.pesanan) {
+      final nama = (item['nama'] as String).toLowerCase();
+      if ((nama == 'mie ayam' || nama == 'mie pangsit') &&
+          !nama.contains('bungkus')) {
+        qty += item['qty'] as int;
+      }
+    }
+    return qty;
+  }
+
+  int _comboTehQty() {
+    int qty = 0;
+    for (final item in widget.pesanan) {
+      final nama = (item['nama'] as String).toLowerCase();
+      if (nama.contains('teh')) {
+        qty += item['qty'] as int;
+      }
+    }
+    return qty;
+  }
+
+  int _discountedTehQty() {
+    final mieQty = _comboMieQty();
+    final tehQty = _comboTehQty();
+    final pairCount = mieQty < tehQty ? mieQty : tehQty;
+    if (pairCount == 0) return 0;
+    if (pairCount == 1) return 1;
+    return pairCount % 2 == 0 ? pairCount : pairCount - 1;
+  }
+
+  int _tehDiscountForItem(int index) {
+    final namaItem = (widget.pesanan[index]['nama'] as String).toLowerCase();
+    if (!namaItem.contains('teh')) return 0;
+
+    int remainingDiscountedTeh = _discountedTehQty();
+    for (int i = 0; i < widget.pesanan.length; i++) {
+      final nama = (widget.pesanan[i]['nama'] as String).toLowerCase();
+      if (!nama.contains('teh')) continue;
+
+      final itemQty = widget.pesanan[i]['qty'] as int;
+      final discountedQty = itemQty <= remainingDiscountedTeh
+          ? itemQty
+          : remainingDiscountedTeh;
+
+      if (i == index) {
+        return discountedQty * 500;
+      }
+
+      remainingDiscountedTeh -= discountedQty;
+      if (remainingDiscountedTeh <= 0) break;
+    }
+    return 0;
   }
 
   int hitungTotalSemua() {
@@ -422,7 +485,6 @@ class _OrderConfirmationBottomSheetState
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
 
               // Tombol Konfirmasi
               SizedBox(

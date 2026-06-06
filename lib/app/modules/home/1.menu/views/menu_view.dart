@@ -122,6 +122,9 @@ class _MenuViewState extends State<MenuView> {
       builder: (context) => OrderConfirmationBottomSheet(
         pesanan: pesanan,
         onConfirm: (finalPesanan, pembeliNote) async {
+          // Gunakan noId per konfirmasi klik agar satu order grup
+          final orderNoId = DateTime.now().millisecondsSinceEpoch;
+
           // Insert ke DB
           for (int i = 0; i < finalPesanan.length; i++) {
             final item = finalPesanan[i];
@@ -134,13 +137,14 @@ class _MenuViewState extends State<MenuView> {
               kategori = 'makanan';
             }
 
-            await DatabaseHelper.instance.insertPesanan(
-              item['nama'] as String,
-              item['qty'] as int,
-              item['total'] as int,
-              item['note'] as String,
-              kategori, // kategori di posisi ke-5
-              pembeliNote, // ciriPembeli di posisi ke-6
+            await DatabaseHelper.instance.insertPesananDenganNoId(
+              noId: orderNoId,
+              nama: item['nama'] as String,
+              qty: item['qty'] as int,
+              total: item['total'] as int,
+              note: item['note'] as String,
+              kategori: kategori,
+              ciriPembeli: pembeliNote,
               status: 'true',
             );
           }

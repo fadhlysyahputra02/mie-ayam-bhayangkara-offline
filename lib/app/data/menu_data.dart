@@ -1,6 +1,6 @@
 final List<Map<String, dynamic>> menuMakanan = [
-  {"nama": "Mie Ayam", "harga": 9000, "qty": 0},
-  {"nama": "Mie Pangsit", "harga": 9000, "qty": 0},
+  {"nama": "Mie Ayam", "harga": 10000, "qty": 0},
+  {"nama": "Mie Pangsit", "harga": 10000, "qty": 0},
   {"nama": "Mie Ayam (bungkus)", "harga": 10000, "qty": 0},
   {"nama": "Mie Pangsit (bungkus)", "harga": 10000, "qty": 0},
 ];
